@@ -1,0 +1,30 @@
+/* Elimina el scroll y asegura que el contenido esté centrado */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Desactiva el scroll */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #2A653E; /* Cambia este color según tu preferencia */
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    max-width: 50vh !important;
+    max-height: 50vw !important;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+
+.logo:hover {
+    transform: scale(1.05); /* Aumenta el tamaño del logo al pasar el cursor */
+}
