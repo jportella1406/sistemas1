@@ -1,0 +1,44 @@
+/* Paleta de Colores */
+.bg-green {
+    background-color: #2A653E;
+}
+
+.bg-gold {
+    background-color: #E2B84C;
+}
+
+.bg-light-cream {
+    background-color: #FFF4E1;
+}
+
+.text-light {
+    color: #FFF4E1;
+}
+
+.btn-green {
+    background-color: #2A653E;
+    color: #FFF4E1;
+    border: none;
+}
+
+.btn-green:hover {
+    background-color: #21552E;
+}
+
+.border-green {
+    border: 2px solid #2A653E;
+}
+
+/* Espacios y alineaciones */
+.text-center {
+    text-align: center;
+}
+
+.py-3 {
+    padding: 1rem 0;
+}
+
+.my-5 {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
