@@ -35,14 +35,14 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
-    class Usuario(db.Model):
+class Usuario(db.Model):
     __tablename__ = 'usuarios'
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
     rol = db.Column(db.String(20), nullable=False)
-    tienda_id = db.Column(db.Integer, db.ForeignKey('tiendas.id'))
+    tienda_id = db.Column(db.Integer, nullable=True)
 
     def __init__(self, username, password, rol, tienda_id=None):
         self.username = username
