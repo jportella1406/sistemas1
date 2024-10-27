@@ -82,11 +82,9 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    # Busca el usuario por nombre de usuario
-    user = Usuario.query.filter_by(username=username).first()
-
     # Verifica si el usuario existe y la contraseña es correcta
-    if user and user.check_password(password):
+    user = User.query.filter_by(username=username).first()
+    if user and user.password == password:  # Aquí no estamos usando hashing, solo comparando texto plano
         return jsonify({'message': 'Inicio de sesión exitoso'}), 200
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401

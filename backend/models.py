@@ -37,17 +37,15 @@ class User(db.Model):
     
     class Usuario(db.Model):
     __tablename__ = 'usuarios'
-
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(150), nullable=False)  # Aquí almacenaremos el hash de la contraseña
+    password = db.Column(db.String(100), nullable=False)
     rol = db.Column(db.String(20), nullable=False)
-    tienda_id = db.Column(db.Integer, db.ForeignKey('tienda.id'))
+    tienda_id = db.Column(db.Integer, db.ForeignKey('tiendas.id'))
 
-    def set_password(self, password):
-        """Almacena el hash de la contraseña en vez de la contraseña en texto plano."""
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        """Verifica el hash de la contraseña."""
-        return check_password_hash(self.password_hash, password)
+    def __init__(self, username, password, rol, tienda_id=None):
+        self.username = username
+        self.password = password
+        self.rol = rol
+        self.tienda_id = tienda_id
