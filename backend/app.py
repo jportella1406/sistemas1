@@ -1,7 +1,6 @@
-# backend/app.py
 from flask import Flask
-from config import Config
 from models import db
+from config import Config
 from routes import routes
 
 app = Flask(__name__)

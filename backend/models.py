@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-
+from datetime import datetime
 db = SQLAlchemy()
 
 class Producto(db.Model):
@@ -9,7 +9,6 @@ class Producto(db.Model):
     precio = db.Column(db.Float, nullable=False)
     imagen = db.Column(db.String(100), nullable=True)  # URL de la imagen
     categoria = db.Column(db.String(50), nullable=False)  # Columna de categoría
-
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
