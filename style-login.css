@@ -124,3 +124,36 @@ body {
 .container .info span .fa {
   color: #EF3B3A;
 }
+
+
+.bg-gold {
+  background-color: #E2B84C;
+}
+
+.btn-custom {
+  background-color: #2A653E; /* Color de fondo */
+  color: #FFF4E1;            /* Color de texto */
+  border: 1px solid #2A653E; /* Borde del mismo color de fondo */
+  border-radius: 5px;        /* Bordes redondeados */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Transición para efecto hover */
+}
+
+.btn-custom:hover {
+  background-color: #37904d; /* Color de fondo en hover */
+  color: #FFF4E1;            /* Color de texto en hover */
+}
+
+.btn-custom i {
+  margin-right: 5px; /* Espacio entre el icono y el texto */
+}
+
+.search-bar {
+  width: 400px !important;    /* Cambia a tu tamaño deseado */
+  max-width: 100% !important; /* Evita que sobrepase el contenedor */
+}
+
+@media (min-width: 768px) {
+  .search-bar {
+      width: 500px !important; /* Más ancho en pantallas grandes */
+  }
+}
