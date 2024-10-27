@@ -37,3 +37,22 @@ def crear_pedido():
 
     db.session.commit()
     return jsonify({"message": "Pedido creado con éxito", "pedido_id": pedido.id}), 201
+
+#Endpoint para filtrar productos por categoría
+@routes.route('/productos/categoria/<string:categoria>', methods=['GET'])
+def get_productos_por_categoria(categoria):
+    productos = Producto.query.filter_by(categoria=categoria).all()
+    return jsonify([{
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion,
+        'precio': producto.precio,
+        'imagen': producto.imagen,
+        'categoria': producto.categoria
+    } for producto in productos])
+
+#Endpoint para obtener todas las categorías
+@routes.route('/productos/categorias', methods=['GET'])
+def get_categorias():
+    categorias = db.session.query(Producto.categoria).distinct().all()
+    return jsonify([categoria[0] for categoria in categorias])
