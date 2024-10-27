@@ -1,0 +1,126 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:300);
+
+/* Fondo de la página */
+body {
+  background: #2A653E; /* Fallback para navegadores antiguos */
+  background: -webkit-linear-gradient(right, #2A653E, #E2B84C);
+  background: -moz-linear-gradient(right, #2A653E, #E2B84C);
+  background: -o-linear-gradient(right, #2A653E, #E2B84C);
+  background: linear-gradient(to left, #2A653E, #E2B84C);
+  font-family: "Roboto", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.body {
+  background-image: url('https://ordinaryfaith.net/wp-content/uploads/2016/03/Gray-plain-website-background.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Contenedor principal de la página de inicio de sesión */
+.login-page {
+  width: 360px;
+  padding: 8% 0 0;
+  margin: auto;
+}
+
+/* Estilo del formulario */
+.form {
+  position: relative;
+  z-index: 1;
+  background: #E2B84C; /* Fondo del formulario */
+  max-width: 360px;
+  margin: 0 auto 100px;
+  padding: 45px;
+  text-align: center;
+  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+}
+
+/* Campos de entrada del formulario */
+.form input {
+  font-family: FontAwesome, "Roboto", sans-serif;
+  outline: 0;
+  background: #FFF4E1; /* Color de fondo para campos de entrada */
+  width: 100%;
+  border: 0;
+  margin: 0 0 15px;
+  padding: 15px;
+  box-sizing: border-box;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* Botón de envío */
+.form button {
+  font-family: "Titillium Web", sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: .1em;
+  outline: 0;
+  background: #2A653E; /* Fondo del botón */
+  width: 100%;
+  border: 0;
+  border-radius: 30px;
+  margin: 0px 0px 8px;
+  padding: 15px;
+  color: #FFF4E1; /* Texto del botón */
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.form button:hover,
+.form button:focus {
+  background: #148f77; /* Fondo del botón al hacer hover */
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+}
+
+.form button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2.5px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Mensaje adicional */
+.form .message {
+  margin: 6px 6px;
+  color: #2A653E; /* Color del texto */
+  font-size: 11px;
+  text-align: center;
+  font-weight: bold;
+  font-style: normal;
+}
+
+.form .message a {
+  color: #FFF4E1; /* Color del enlace dentro del mensaje */
+  text-decoration: none;
+  font-size: 13px;
+}
+
+/* Contenedor de información */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.container .info h1 {
+  font-size: 36px;
+  font-weight: 300;
+  color: #1a1a1a;
+}
+
+.container .info span {
+  color: #4d4d4d;
+  font-size: 12px;
+}
+
+.container .info span a {
+  color: #2A653E; /* Color del enlace dentro del contenedor */
+  text-decoration: none;
+}
+
+.container .info span .fa {
+  color: #EF3B3A;
+}
