@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 class Producto(db.Model):
@@ -22,3 +23,31 @@ class ProductoPedido(db.Model):  # Relación de muchos a muchos entre Pedido y P
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
     producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
     cantidad = db.Column(db.Integer, nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password_hash = db.Column(db.String(150), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    class Usuario(db.Model):
+    __tablename__ = 'usuarios'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(150), nullable=False)  # Aquí almacenaremos el hash de la contraseña
+    rol = db.Column(db.String(20), nullable=False)
+    tienda_id = db.Column(db.Integer, db.ForeignKey('tienda.id'))
+
+    def set_password(self, password):
+        """Almacena el hash de la contraseña en vez de la contraseña en texto plano."""
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        """Verifica el hash de la contraseña."""
+        return check_password_hash(self.password_hash, password)

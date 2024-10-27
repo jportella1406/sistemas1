@@ -1,6 +1,6 @@
 # backend/routes.py
 from flask import Blueprint, jsonify, request
-from models import db, Producto, Pedido, ProductoPedido
+from models import db, Producto, Pedido, ProductoPedido, User, Usuario
 
 routes = Blueprint('routes', __name__)
 
@@ -56,3 +56,37 @@ def get_productos_por_categoria(categoria):
 def get_categorias():
     categorias = db.session.query(Producto.categoria).distinct().all()
     return jsonify([categoria[0] for categoria in categorias])
+
+@routes.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    rol = data.get('rol', 'comprador')  # Asigna rol por defecto si no se especifica (puede ser 'comprador', 'vendedor', etc.)
+
+    # Verifica si el usuario ya existe
+    if Usuario.query.filter_by(username=username).first():
+        return jsonify({'message': 'El usuario ya existe'}), 400
+
+    # Crea un nuevo usuario y guarda el hash de la contraseña
+    new_user = Usuario(username=username, rol=rol)
+    new_user.set_password(password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+
+@routes.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Busca el usuario por nombre de usuario
+    user = Usuario.query.filter_by(username=username).first()
+
+    # Verifica si el usuario existe y la contraseña es correcta
+    if user and user.check_password(password):
+        return jsonify({'message': 'Inicio de sesión exitoso'}), 200
+    else:
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
