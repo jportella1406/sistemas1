@@ -1,6 +1,6 @@
 # backend/routes.py
-from flask import Blueprint, jsonify, request
-from models import db, Producto, Pedido, ProductoPedido, User, Usuario
+from flask import Blueprint, jsonify, request, session, current_app as app
+from models import db, Producto, Pedido, ProductoPedido, Usuarios
 
 routes = Blueprint('routes', __name__)
 
@@ -38,7 +38,7 @@ def crear_pedido():
     db.session.commit()
     return jsonify({"message": "Pedido creado con éxito", "pedido_id": pedido.id}), 201
 
-#Endpoint para filtrar productos por categoría
+# Endpoint para filtrar productos por categoría
 @routes.route('/productos/categoria/<string:categoria>', methods=['GET'])
 def get_productos_por_categoria(categoria):
     productos = Producto.query.filter_by(categoria=categoria).all()
@@ -51,40 +51,50 @@ def get_productos_por_categoria(categoria):
         'categoria': producto.categoria
     } for producto in productos])
 
-#Endpoint para obtener todas las categorías
+# Endpoint para obtener todas las categorías
 @routes.route('/productos/categorias', methods=['GET'])
 def get_categorias():
     categorias = db.session.query(Producto.categoria).distinct().all()
     return jsonify([categoria[0] for categoria in categorias])
 
+# Ruta de registro
 @routes.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    rol = data.get('rol', 'comprador')  # Asigna rol por defecto si no se especifica (puede ser 'comprador', 'vendedor', etc.)
+    rol = data.get('rol', 'comprador')  # Asigna rol por defecto si no se especifica
 
     # Verifica si el usuario ya existe
-    if Usuario.query.filter_by(username=username).first():
+    if Usuarios.query.filter_by(username=username).first():
         return jsonify({'message': 'El usuario ya existe'}), 400
 
-    # Crea un nuevo usuario y guarda el hash de la contraseña
-    new_user = Usuario(username=username, rol=rol)
-    new_user.set_password(password)
+    # Crea un nuevo usuario y guarda la contraseña
+    new_user = Usuarios(username=username, password=password, role=rol)
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
+# Ruta de inicio de sesión
 @routes.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
-    # Verifica si el usuario existe y la contraseña es correcta
-    user = User.query.filter_by(username=username).first()
-    if user and user.password == password:  # Aquí no estamos usando hashing, solo comparando texto plano
-        return jsonify({'message': 'Inicio de sesión exitoso'}), 200
+    # Verificar usuario en la tabla Usuarios
+    user = Usuarios.query.filter_by(username=username).first()
+
+    if user:
+        # Comparar contraseña recibida con la almacenada
+        if user.password == password:
+            # Almacenar los datos del usuario en la sesión
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
+            return jsonify({'message': 'Inicio de sesión exitoso'}), 200
+        else:
+            return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
     else:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+        return jsonify({'message': 'Usuario no encontrado'}), 404

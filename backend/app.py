@@ -1,71 +1,119 @@
-# app.py
-from flask import Flask, request, session, redirect, url_for, render_template, jsonify
-from flask_sqlalchemy import SQLAlchemy
+# backend/routes.py
+from flask import Flask, Blueprint, jsonify, request, session, current_app as app
+from models import db, Producto, Pedido, ProductoPedido, Usuarios
+routes = Blueprint('routes', __name__)
 import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mercadito.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.urandom(24)  # Clave secreta para firmar las sesiones
-db = SQLAlchemy(app)
+app.config['SECRET_KEY'] = os.urandom(24)
+db.init_app(app)
 
-# Definición del modelo de Usuario
-class User(db.Model):
-    __tablename__ = 'usuarios'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
+# Registrar el Blueprint
+app.register_blueprint(routes)
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
+
+# Endpoint para obtener todos los productos
+@routes.route('/productos', methods=['GET'])
+def get_productos():
+    productos = Producto.query.all()
+    return jsonify([{
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion,
+        'precio': producto.precio,
+        'imagen': producto.imagen
+    } for producto in productos])
+
+# Endpoint para crear un pedido
+@routes.route('/pedidos', methods=['POST'])
+def crear_pedido():
+    data = request.get_json()
+    total = data.get('total')
+    productos_data = data.get('productos')  # Lista de productos con sus cantidades
+
+    pedido = Pedido(total=total)
+    db.session.add(pedido)
+    db.session.flush()  # Guarda el pedido para obtener su ID
+
+    for item in productos_data:
+        producto_pedido = ProductoPedido(
+            pedido_id=pedido.id,
+            producto_id=item['producto_id'],
+            cantidad=item['cantidad']
+        )
+        db.session.add(producto_pedido)
+
+    db.session.commit()
+    return jsonify({"message": "Pedido creado con éxito", "pedido_id": pedido.id}), 201
+
+# Endpoint para filtrar productos por categoría
+@routes.route('/productos/categoria/<string:categoria>', methods=['GET'])
+def get_productos_por_categoria(categoria):
+    productos = Producto.query.filter_by(categoria=categoria).all()
+    return jsonify([{
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion,
+        'precio': producto.precio,
+        'imagen': producto.imagen,
+        'categoria': producto.categoria
+    } for producto in productos])
+
+# Endpoint para obtener todas las categorías
+@routes.route('/productos/categorias', methods=['GET'])
+def get_categorias():
+    categorias = db.session.query(Producto.categoria).distinct().all()
+    return jsonify([categoria[0] for categoria in categorias])
 
 # Ruta de registro
-@app.route('/register', methods=['POST'])
+@routes.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    role = data.get('role', 'comprador')  # Rol por defecto
+    rol = data.get('rol', 'comprador')  # Asigna rol por defecto si no se especifica
 
-    if User.query.filter_by(username=username).first():
+    # Verifica si el usuario ya existe
+    if Usuarios.query.filter_by(username=username).first():
         return jsonify({'message': 'El usuario ya existe'}), 400
 
-    new_user = User(username=username, password=password, role=role)
+    # Crea un nuevo usuario y guarda la contraseña
+    new_user = Usuarios(username=username, password=password, role=rol)
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
 # Ruta de inicio de sesión
-@app.route('/login', methods=['POST'])
+@routes.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
-    user = User.query.filter_by(username=username, password=password).first()
-    if not user:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+    print(f"Username recibido: {username}, Password recibido: {password}")  # Mensaje de depuración
 
-    # Almacenar los datos del usuario en la sesión
-    session['user_id'] = user.id
-    session['username'] = user.username
-    session['role'] = user.role
-    return jsonify({'message': 'Inicio de sesión exitoso'}), 200
+    # Verificar usuario en la tabla Usuarios
+    user = Usuarios.query.filter_by(username=username).first()
 
-# Ruta de cierre de sesión
-@app.route('/logout', methods=['GET'])
-def logout():
-    session.clear()
-    return jsonify({'message': 'Sesión cerrada exitosamente'}), 200
-
-# Ruta protegida para verificar si el usuario está logeado
-@app.route('/protected', methods=['GET'])
-def protected():
-    if 'user_id' in session:
-        return jsonify({'message': f'Bienvenido, {session["username"]}', 'role': session['role']}), 200
+    if user:
+        print(f"Usuario encontrado: {user.username}, Password esperado: {user.password}")  # Debug
     else:
-        return jsonify({'message': 'No autenticado'}), 401
+        print("Usuario no encontrado")
 
-if __name__ == '__main__':
-    db.create_all()
-    app.run(debug=True)
-
+    if user and user.password == password:
+        # Almacenar los datos del usuario en la sesión
+        session['user_id'] = user.id
+        session['username'] = user.username
+        session['role'] = user.role
+        print("Inicio de sesión exitoso")  # Mensaje de depuración
+        return jsonify({'message': 'Inicio de sesión exitoso'}), 200
+    else:
+        print("Usuario o contraseña incorrectos")  # Mensaje de depuración
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
