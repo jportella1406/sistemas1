@@ -164,9 +164,19 @@
     max-width: 100% !important; /* Evita que sobrepase el contenedor */
 }
 
-@media (min-width: 768px) {
-    .search-bar {
-        width: 500px !important; /* Más ancho en pantallas grandes */
+/* Mostrar breadcrumb solo en pantallas pequeñas y ocultar cuando el menú esté colapsado */
+@media (max-width: 991.98px) {
+    #navbarSupportedContent {
+        display: none !important; /* Ocultar la barra de navegación */
+    }
+    #breadcrumbContainer {
+        display: block !important; /* Mostrar el breadcrumb */
     }
 }
 
+/* Ocultar el breadcrumb en pantallas grandes */
+@media (min-width: 992px) {
+    #breadcrumbContainer {
+        display: none; /* Ocultar breadcrumb en pantallas grandes */
+    }
+}
