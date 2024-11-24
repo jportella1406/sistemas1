@@ -1,18 +1,64 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mercadito.pe</title>
-    <!-- Enlace a la hoja de estilos externa -->
-    <link rel="stylesheet" href="style-index.css">
+    <title>RedStore | Ecommerce Website Design</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
+
 <body>
-    <!-- Contenedor del logo con enlace a la página principal -->
-    <div class="logo-container">
-        <a href="main.html">
-            <img src="img/logo.jpg" alt="Logo Mercadito" class="logo">
-        </a>
+    
+    <div class="header">
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">
+                    <a href="index.html"><img src="img/logo.jpg" alt="logo" width="125px"></a>
+                </div>
+                <nav>
+                    <ul id="MenuItems">
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="products.html">Productos</a></li>
+                        <li><a href="account.html">Cuenta</a></li>
+                    </ul>
+                </nav>
+                <a href="cart.html"><img src="img/cart.png" width="30px" height="30px"></a>
+                <img src="img/menu.png" class="menu-icon" onclick="menutoggle()">
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <h1>Una nueva forma de comprar!</h1>
+                    <p>Mercadito.pe inaugura su nueva forma de compras online<p>Suscribete!</p></p>
+                    <a href="" class="btn">Comprar &#8594;</a>
+                </div>
+                <div class="col-2">
+                    <img src="img/logo.jpg">
+                </div>
+            </div>
+        </div>
     </div>
+
+  
+
+    <!-- javascript -->
+
+    <script>
+        var MenuItems = document.getElementById("MenuItems");
+        MenuItems.style.maxHeight = "0px";
+        function menutoggle() {
+            if (MenuItems.style.maxHeight == "0px") {
+                MenuItems.style.maxHeight = "200px"
+            }
+            else {
+                MenuItems.style.maxHeight = "0px"
+            }
+        }
+    </script>
+
 </body>
+
 </html>
