@@ -22,21 +22,26 @@
 
 <body class="body">
     <!-- Barra de Navegación -->
-    <div class="navbar">
-      <div class="logo">
-          <a href="index.html"><img src="img/logo_corto.png" alt="logo" width="125px"></a>
+    <!-- Barra de Navegación -->
+    <div class="header">
+      <div class="container">
+        <div class="navbar">
+          <div class="logo">
+              <a href="index.html"><img src="img/logo_corto.png" alt="logo" width="125px"></a>
+          </div>
+          <nav>
+              <ul id="MenuItems">
+                  <li><a href="index.html">Inicio</a></li>
+                  <li><a href="#productos">Productos</a></li>
+                  <li><a href="#ofertas">Oferta</a></li>
+                  <li><a href="login.html">Cuenta</a></li>
+              </ul>
+          </nav>
+          <a href="carrito.html"><img src="img/cart.png" width="30px" height="30px"></a>
+          <img src="img/menu.png" class="menu-icon" onclick="menutoggle()">
+        </div>
       </div>
-      <nav>
-          <ul id="MenuItems">
-              <li><a href="index.html">Inicio</a></li>
-              <li><a href="#productos">Productos</a></li>
-              <li><a href="#ofertas">Oferta</a></li>
-              <li><a href="login.html">Cuenta</a></li>
-          </ul>
-      </nav>
-      <a href="carrito.html"><img src="img/cart.png" width="30px" height="30px"></a>
-      <img src="img/menu.png" class="menu-icon" onclick="menutoggle()">
-  </div>
+    </div>
 
 
       <div class="login-page">
@@ -67,6 +72,37 @@
         </div>
       </div>
     </body>
+
+     <!-- Pie de pagina -->
+     <div class="footer">
+      <div class="container">
+          <div class="row">
+              <div class="footer-col-2">
+                  <img src="img/logo_corto.png">
+                  <p style="color: white;">Nuestro proposito es llegar a su hogar de la manera mas accesible y a tiempo.
+                  </p>
+              </div>
+              <div class="footer-col-3">
+                  <h3>Mi cuenta</h3>
+                  <ul>
+                      <li>Iniciar Sesion</li>
+                      
+                  </ul>
+              </div>
+              <div class="footer-col-4">
+                  <h3>Follow Us</h3>
+                  <ul>
+                      <li>Facebook</li>
+                      <li>Twitter</li>
+                      <li>Instagram</li>
+                      <li>Youtube</li>
+                  </ul>
+              </div>
+          </div>
+          <hr>
+          <p class="copyright">Copyright 2024 - Jose Portella</p>
+      </div>
+  </div>
     <script>
       function show() {
         var password = document.getElementById("password");
