@@ -21,7 +21,6 @@
 </head>
 
 <body class="body">
-
     <!-- Barra de Navegación -->
     <div class="container">
       <div class="navbar">
@@ -40,57 +39,47 @@
       </div>
   </div>
 
-<div class="login-page">
-  <div class="form">
 
-    <form>
-      <lottie-player src="https://assets4.lottiefiles.com/datafiles/XRVoUu3IX4sGWtiC3MPpFnJvZNq7lVWDCa8LSqgS/profile.json"  background="transparent"  speed="1"  style="justify-content: center;" loop  autoplay></lottie-player>
-      <input type="text" placeholder="&#xf007;  username"/>
-      <input type="password" id="password" placeholder="&#xf023;  password"/>
-      <i class="fas fa-eye" onclick="show()"></i> 
-      <br>
-      <br>
-      <button>Iniciar Sesion</button>
-      <p class="message"></p>
-    </form>
+      <div class="login-page">
+        <div class="form">
+          <form>
+            <lottie-player
+              src="https://assets4.lottiefiles.com/datafiles/XRVoUu3IX4sGWtiC3MPpFnJvZNq7lVWDCa8LSqgS/profile.json"
+              background="transparent"
+              speed="1"
+              style="justify-content: center"
+              loop
+              autoplay
+            ></lottie-player>
+            <input type="text" placeholder="Nombre completo" />
+            <input type="text" placeholder="direccion de correo" />
+            <input type="text" placeholder="Elegir un nombre de usuario" />
+            <input type="password" id="password" placeholder="set a password" />
+            <i class="fas fa-eye" onclick="show()"></i>
+            <br>
+            <br>
+          </form>
 
-    <form class="login-form">
-    </form>
-    <button onclick="redirectToRegister()">Registrarse</button>
-  </div>
-</div>
+          <form class="login-form">
+            <button type="button" onclick="window.location.href='login.html'">
+              Registrarse
+            </button>
+          </form>
+        </div>
+      </div>
+    </body>
+    <script>
+      function show() {
+        var password = document.getElementById("password");
+        var icon = document.querySelector(".fas");
 
-<script>
-  function login(event) {
-    event.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    fetch('http://127.0.0.1:5000/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.message === 'Inicio de sesión exitoso') {
-        alert(data.message);
-        window.location.href = 'main.html';  // Redirige a la página principal
-      } else {
-        document.getElementById('loginMessage').textContent = data.message;
+        // ========== Checking type of password ===========
+        if (password.type === "password") {
+          password.type = "text";
+        } else {
+          password.type = "password";
+        }
       }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      document.getElementById('loginMessage').textContent = 'Error al conectar con el servidor';
-    });
-  }
-
-  function redirectToRegister() {
-    window.location.href = 'registrar.html';  // Redirige a la página de registro
-  }
-</script>
-</body>
+    </script>
+  </html>
 </html>
