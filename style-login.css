@@ -2,19 +2,12 @@
 
 /* Fondo de la página */
 body {
-  background: #2A653E; /* Fallback para navegadores antiguos */
-  background: -webkit-linear-gradient(right, #2A653E, #E2B84C);
-  background: -moz-linear-gradient(right, #2A653E, #E2B84C);
-  background: -o-linear-gradient(right, #2A653E, #E2B84C);
-  background: linear-gradient(to left, #2A653E, #E2B84C);
-  font-family: "Roboto", sans-serif;
+  background: radial-gradient(#fff, #2A653E);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .body {
-  background-image: url('https://ordinaryfaith.net/wp-content/uploads/2016/03/Gray-plain-website-background.jpg');
-  background-repeat: no-repeat;
   background-size: cover;
 }
 
@@ -29,7 +22,7 @@ body {
 .form {
   position: relative;
   z-index: 1;
-  background: #E2B84C; /* Fondo del formulario */
+  background: white; /* Fondo del formulario */
   max-width: 360px;
   margin: 0 auto 100px;
   padding: 45px;
@@ -39,7 +32,6 @@ body {
 
 /* Campos de entrada del formulario */
 .form input {
-  font-family: FontAwesome, "Roboto", sans-serif;
   outline: 0;
   background: #FFF4E1; /* Color de fondo para campos de entrada */
   width: 100%;
@@ -53,7 +45,6 @@ body {
 
 /* Botón de envío */
 .form button {
-  font-family: "Titillium Web", sans-serif;
   font-size: 14px;
   font-weight: bold;
   letter-spacing: .1em;

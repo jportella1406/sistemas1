@@ -12,50 +12,33 @@
       <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
       <!-- Enlace a estilo personalizado -->
       <link rel="stylesheet" href="style-main.css">
+      <link rel="stylesheet" href="style.css">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+      <link rel="stylesheet" href="style.css">
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
 <body class="body">
 
     <!-- Barra de Navegación -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-gold">
-      <div class="container-fluid">
-  
-          <!-- Toggle button for small screens -->
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-          </button>
-  
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <!-- Left-aligned menu items -->
-              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                  <li class="nav-item">
-                      <a class="nav-link text-dark" href="main.html">Inicio</a>
-                  </li>
-                  <li class="nav-item">
-                      <a class="nav-link text-dark" href="#">Productos</a>
-                  </li>
-                  <li class="nav-item">
-                      <a class="nav-link text-dark" href="#">Ofertas</a>
-                  </li>
-                  <li class="nav-item">
-                      <a class="nav-link text-dark" href="#">Contactos</a>
-                  </li>
-              </ul>
-              <!-- Centered and responsive search form -->
-              <div class="mx-auto" style="max-width: 400px; width: 100%;">
-                  <form class="d-flex" role="search">
-                      <input class="form-control search-bar me-2" type="search" placeholder="Buscar" aria-label="Search">
-                      <button class="btn btn-custom" type="submit">Buscar</button>
-                  </form>                    
-              </div>
-              <!-- Right-aligned login button with icon -->
-              <a href="login.html" class="btn btn-custom ms-3">
-                  <i class="fas fa-sign-in-alt"></i> Iniciar sesión
-              </a>
+    <div class="container">
+      <div class="navbar">
+          <div class="logo">
+              <a href="index.html"><img src="img/logo_corto.png" alt="logo" width="125px"></a>
           </div>
+          <nav>
+              <ul id="MenuItems">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="products.html">Productos</a></li>
+                <li><a href="login.html">Cuenta</a></li>
+              </ul>
+          </nav>
+          <a href="cart.html"><img src="images/cart.png" width="30px" height="30px"></a>
+          <img src="images/menu.png" class="menu-icon" onclick="menutoggle()">
       </div>
-  </nav>
+  </div>
 
 <div class="login-page">
   <div class="form">
@@ -72,7 +55,6 @@
     </form>
 
     <form class="login-form">
-      <button type="button" onclick="window.location.href='registrar.html'">Registrarse</button>
     </form>
     <button onclick="redirectToRegister()">Registrarse</button>
   </div>
