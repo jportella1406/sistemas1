@@ -1,8 +1,21 @@
 # backend/routes.py
+from datetime import datetime
 from flask import Blueprint, jsonify, request, session, current_app as app
-from models import db, Producto, Pedido, ProductoPedido, Usuarios
+from models import db, Categoria, Producto, Pedido, ProductoPedido, Usuarios
+import os
+import jwt
+import datetime
+from functools import wraps
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt
+from models import db, Producto, Usuarios, Categoria, Pedido, ProductoPedido
 
 routes = Blueprint('routes', __name__)
+@routes.route('/categorias', methods=['GET'])
+
+def get_categorias():
+    categorias = Categoria.query.all()
+    return jsonify([{'id': categoria.id, 'nombre': categoria.nombre} for categoria in categorias])
 
 # Endpoint para obtener todos los productos
 @routes.route('/productos', methods=['GET'])
@@ -16,27 +29,31 @@ def get_productos():
         'imagen': producto.imagen
     } for producto in productos])
 
-# Endpoint para crear un pedido
-@routes.route('/pedidos', methods=['POST'])
+@routes.route('/pedidos/', methods=['POST'])
 def crear_pedido():
+
     data = request.get_json()
-    total = data.get('total')
-    productos_data = data.get('productos')  # Lista de productos con sus cantidades
+    productos = data.get('productos', [])
 
-    pedido = Pedido(total=total)
-    db.session.add(pedido)
-    db.session.flush()  # Guarda el pedido para obtener su ID
+    nuevo_pedido = Pedido(fecha=datetime.datetime.utcnow(), total=0, estado='Pendiente')
+    db.session.add(nuevo_pedido)
+    db.session.flush()
 
-    for item in productos_data:
-        producto_pedido = ProductoPedido(
-            pedido_id=pedido.id,
-            producto_id=item['producto_id'],
-            cantidad=item['cantidad']
-        )
-        db.session.add(producto_pedido)
+    total = 0
+    for item in productos:
+        producto_id = item['producto_id']
+        cantidad = item['cantidad']
+        producto = Producto.query.get(producto_id)
+        
+        if producto:
+            total += producto.precio * cantidad
+            producto_pedido = ProductoPedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad)
+            db.session.add(producto_pedido)
 
+    nuevo_pedido.total = total
     db.session.commit()
-    return jsonify({"message": "Pedido creado con éxito", "pedido_id": pedido.id}), 201
+
+    return jsonify({'message': 'Pedido creado exitosamente', 'pedido_id': nuevo_pedido.id}), 201
 
 # Endpoint para filtrar productos por categoría
 @routes.route('/productos/categoria/<string:categoria>', methods=['GET'])
@@ -50,14 +67,26 @@ def get_productos_por_categoria(categoria):
         'imagen': producto.imagen,
         'categoria': producto.categoria
     } for producto in productos])
-
-# Endpoint para obtener todas las categorías
+def format_producto(producto):
+    return {
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion,
+        'precio': producto.precio,
+        'imagen': producto.imagen,
+        'categoria': producto.categoria.nombre
+    }
 @routes.route('/productos/categorias', methods=['GET'])
-def get_categorias():
-    categorias = db.session.query(Producto.categoria).distinct().all()
-    return jsonify([categoria[0] for categoria in categorias])
-
-# Ruta de registro
+def get_productos_por_categorias():
+    categorias = Categoria.query.all()
+    data = []
+    for categoria in categorias:
+        productos = Producto.query.filter_by(categoria_id=categoria.id).all()
+        data.append({
+            "nombre": categoria.nombre,
+            "productos": [format_producto(producto) for producto in productos]
+        })
+    return jsonify(data)
 @routes.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
