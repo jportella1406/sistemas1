@@ -69,38 +69,48 @@ def get_categorias():
     return jsonify([categoria[0] for categoria in categorias])
 
 # Ruta de registro
-@routes.route('/api/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    rol = data.get('rol', 'comprador')  # Asigna rol por defecto si no se especifica
+    # Obtener datos del formulario
+    nombre = request.form.get('nombre')
+    email = request.form.get('email')
+    username = request.form.get('username')
+    password = request.form.get('password')
 
-    # Verifica si el usuario ya existe
-    if Usuarios.query.filter_by(username=username).first():
-        return jsonify({'message': 'El usuario ya existe'}), 400
+    # Verificar si el usuario ya existe
+    existing_user = Usuarios.query.filter_by(username=username).first()
+    if existing_user:
+        return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
 
-    # Crea un nuevo usuario y guarda la contraseña
-    new_user = Usuarios(username=username, password=password, role=rol)
+    # Crear un nuevo usuario
+    new_user = Usuarios(
+        username=username,
+        password=password,  # Aquí puedes usar un hash para almacenar la contraseña de manera segura
+        rol="usuario",  # Puedes ajustar el rol según tus necesidades
+        nombre=nombre,
+        email=email
+    )
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
+
 # Ruta de inicio de sesión
 @routes.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-    usuario = data.get('usuario')  # Cambiado de "username"
+    username = data.get('username')
     password = data.get('password')
 
     # Verificar usuario en la tabla Usuarios
-    user = Usuarios.query.filter_by(usuario=usuario).first()
+    user = Usuarios.query.filter_by(username=username).first()
 
     if user and user.password == password:
+        # Almacenar los datos del usuario en la sesión
         session['user_id'] = user.user_id
-        session['usuario'] = user.usuario  # Cambiado de "username"
-        session['rol'] = user.rol
+        session['username'] = user.username
+        session['role'] = user.rol
         return jsonify({'message': 'Inicio de sesión exitoso'}), 200
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401

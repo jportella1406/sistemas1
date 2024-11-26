@@ -52,19 +52,14 @@
             loop
             autoplay
           ></lottie-player>
-          <input type="text" placeholder="Nombre completo" />
-          <input type="text" placeholder="Dirección de correo electrónico" />
-          <input type="text" placeholder="Ingresa un nombre de usuario" />
-          <input type="password" id="password" placeholder="Ingresa una contraseña" />
+          <input type="text" placeholder="Nombre completo" name="nombre" required />
+          <input type="text" placeholder="Dirección de correo electrónico" name="email" required />
+          <input type="text" placeholder="Ingresa un nombre de usuario" name="username" required />
+          <input type="password" id="password" name="password" placeholder="Ingresa una contraseña" required />
           <i class="fas fa-eye" onclick="show()"></i>
-          <br>
-          <br>
-        </form>
-
-        <form class="login-form">
-          <button type="button" onclick="window.location.href='{{ url_for('login_page') }}'">
-            Registrarse
-          </button>
+          <br />
+          <p id="registerMessage" class="message"></p>
+          <button type="button" onclick="registerUser()">Registrarse</button>
         </form>
       </div>
     </div>
@@ -112,5 +107,35 @@
         }
       }
     </script>
+
+    <script>
+      function registerUser() {
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+
+        fetch('/api/register', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(response => response.json())
+          .then(data => {
+            const message = document.getElementById('registerMessage');
+            if (data.message === 'Usuario registrado exitosamente') {
+              message.style.color = 'green';
+              message.textContent = data.message;
+            } else {
+              message.style.color = 'red';
+              message.textContent = data.message;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            const message = document.getElementById('registerMessage');
+            message.style.color = 'red';
+            message.textContent = 'Error al conectar con el servidor';
+          });
+      }
+    </script>
+
 </body>
 </html>
