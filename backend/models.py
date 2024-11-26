@@ -38,15 +38,16 @@ class User(db.Model):
 class Usuarios(db.Model):
     __tablename__ = 'usuarios'
     
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    rol = db.Column(db.String(20), nullable=False)  # Este es el atributo correcto
-    tienda_id = db.Column(db.Integer, nullable=True)
+    user_id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    usuario = db.Column(db.String(100), unique=True, nullable=False)  # Cambiado de "username"
+    password = db.Column(db.String(255), nullable=False)
+    rol = db.Column(db.String(20), nullable=False)
 
-
-    def __init__(self, username, password, rol, tienda_id=None):
-        self.username = username
+    def __init__(self, nombre, email, usuario, password, rol):
+        self.nombre = nombre
+        self.email = email
+        self.usuario = usuario
         self.password = password
         self.rol = rol
-        self.tienda_id = tienda_id

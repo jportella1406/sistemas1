@@ -91,20 +91,20 @@ def register():
 @routes.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data.get('username')
+    usuario = data.get('usuario')  # Cambiado de "username"
     password = data.get('password')
 
     # Verificar usuario en la tabla Usuarios
-    user = Usuarios.query.filter_by(username=username).first()
+    user = Usuarios.query.filter_by(usuario=usuario).first()
 
     if user and user.password == password:
-        # Almacenar los datos del usuario en la sesión
-        session['user_id'] = user.id
-        session['username'] = user.username
-        session['rol'] = user.rol  # Cambiado de 'role' a 'rol'
+        session['user_id'] = user.user_id
+        session['usuario'] = user.usuario  # Cambiado de "username"
+        session['rol'] = user.rol
         return jsonify({'message': 'Inicio de sesión exitoso'}), 200
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
 
 
 ### --- Rutas para Páginas HTML --- ###
