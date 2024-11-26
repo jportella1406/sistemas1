@@ -41,8 +41,9 @@ class Usuarios(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    rol = db.Column(db.String(20), nullable=False)
+    rol = db.Column(db.String(20), nullable=False)  # Este es el atributo correcto
     tienda_id = db.Column(db.Integer, nullable=True)
+
 
     def __init__(self, username, password, rol, tienda_id=None):
         self.username = username

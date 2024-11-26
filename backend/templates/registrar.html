@@ -1,0 +1,116 @@
+<!DOCTYPE HTML>
+<html lang="es">
+<head>
+  <title>Registro</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Ruta al CSS usando Flask -->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style-login.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.1/css/all.css" integrity="sha384-vp86vTRFVJgpjF9jiIGPEEqYqlDwgyBgEF109VFjmqGmIY/Y4HV4d3Gp2irVfcrp" crossorigin="anonymous">
+  <!-- Enlace a Bootstrap CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Estilos adicionales -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style-main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="body">
+    <!-- Barra de Navegación -->
+    <div class="header">
+      <div class="container">
+        <div class="navbar">
+          <div class="logo">
+              <!-- Ruta al logo -->
+              <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px"></a>
+          </div>
+          <nav>
+              <ul id="MenuItems">
+                  <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                  <li><a href="#productos">Productos</a></li>
+                  <li><a href="#ofertas">Oferta</a></li>
+                  <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
+              </ul>
+          </nav>
+          <a href="{{ url_for('carrito') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
+          <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
+        </div>
+      </div>
+    </div>
+
+    <div class="login-page">
+      <div class="form">
+        <form>
+          <lottie-player
+            src="https://assets4.lottiefiles.com/datafiles/XRVoUu3IX4sGWtiC3MPpFnJvZNq7lVWDCa8LSqgS/profile.json"
+            background="transparent"
+            speed="1"
+            style="justify-content: center"
+            loop
+            autoplay
+          ></lottie-player>
+          <input type="text" placeholder="Nombre completo" />
+          <input type="text" placeholder="Dirección de correo electrónico" />
+          <input type="text" placeholder="Ingresa un nombre de usuario" />
+          <input type="password" id="password" placeholder="Ingresa una contraseña" />
+          <i class="fas fa-eye" onclick="show()"></i>
+          <br>
+          <br>
+        </form>
+
+        <form class="login-form">
+          <button type="button" onclick="window.location.href='{{ url_for('login_page') }}'">
+            Registrarse
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pie de página -->
+    <div class="footer">
+      <div class="container">
+          <div class="row">
+              <div class="footer-col-2">
+                  <img src="{{ url_for('static', filename='img/logo_corto.png') }}">
+                  <p style="color: white;">Nuestro propósito es llegar a su hogar de la manera más accesible y a tiempo.
+                  </p>
+              </div>
+              <div class="footer-col-3">
+                  <h3>Mi cuenta</h3>
+                  <ul>
+                      <li>Iniciar Sesión</li>
+                  </ul>
+              </div>
+              <div class="footer-col-4">
+                  <h3>Follow Us</h3>
+                  <ul>
+                      <li>Facebook</li>
+                      <li>Twitter</li>
+                      <li>Instagram</li>
+                      <li>Youtube</li>
+                  </ul>
+              </div>
+          </div>
+          <hr>
+          <p class="copyright">Copyright 2024 - Jose Portella</p>
+      </div>
+    </div>
+
+    <script>
+      function show() {
+        var password = document.getElementById("password");
+        var icon = document.querySelector(".fas");
+
+        // Cambiar el tipo de campo entre texto y contraseña
+        if (password.type === "password") {
+          password.type = "text";
+        } else {
+          password.type = "password";
+        }
+      }
+    </script>
+</body>
+</html>
