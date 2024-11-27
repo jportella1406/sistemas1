@@ -95,6 +95,15 @@ def register():
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
+# Dashboard para ver los usuarios desde admin
+
+@app.route('/dashboard')
+def dashboard():
+    # Consulta a la base de datos para obtener todos los usuarios
+    usuarios = Usuarios.query.all()
+    return render_template('dashboard.html', usuarios=usuarios)
+
+
 
 # Ruta de inicio de sesión
 @routes.route('/api/login', methods=['POST'])
@@ -115,6 +124,14 @@ def login():
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = Usuarios.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return redirect('/dashboard')
+    return "Usuario no encontrado", 404
 
 
 ### --- Rutas para Páginas HTML --- ###
@@ -130,10 +147,6 @@ def login_page():
 @app.route('/carrito')
 def carrito():
     return render_template('carrito.html')
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
 
 @app.route('/registrar')
 def registrar():
