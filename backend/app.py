@@ -134,6 +134,21 @@ def delete_user(user_id):
     return "Usuario no encontrado", 404
 
 
+@app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    usuario = Usuarios.query.get(user_id)
+
+    if not usuario:
+        return jsonify({'message': 'Usuario no encontrado'}), 404
+
+    usuario.nombre = data.get('nombre', usuario.nombre)
+    usuario.email = data.get('email', usuario.email)
+    usuario.rol = data.get('rol', usuario.rol)
+
+    db.session.commit()
+    return jsonify({'message': 'Usuario actualizado con éxito'}), 200
+
 ### --- Rutas para Páginas HTML --- ###
 
 @app.route('/')
