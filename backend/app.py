@@ -306,7 +306,7 @@ def dashboard():
 
 @app.route('/registrar')
 def registrar():
-    return redirect(url_for('registrar.html'))
+    return render_template('registrar.html')
 
 @app.route('/view-cart')
 def view_cart():
