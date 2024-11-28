@@ -449,3 +449,33 @@ form a{
         display: none;
     }
 }
+
+.quantity-selector {
+    display: inline-flex;
+    align-items: center;
+}
+.quantity-selector button {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    line-height: 1;
+}
+.quantity-selector input {
+    text-align: center;
+    font-size: 16px;
+    padding: 0;
+}
+
+.d-none {
+    display: none;
+}
+
+/*Estilos para el boton de seleccion de productos del index.html*/
+
+.quantity-controls {
+    align-items: center; /* Centra verticalmente */
+    justify-content: center; /* Centra horizontalmente */
+    gap: 10px; /* Espaciado entre los elementos */
+}
+
+

@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    
 </head>
 
 <body>
@@ -45,41 +46,30 @@
         </div>
     </div>
 
-    <!-- Featured Products -->
-    <div class="small-container" id="productos">
-        <h2 class="title">Productos disponibles para envío</h2>
-        <div class="row">
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/cervezas.jpg') }}"></a>
-                <h4>Cerveza Cusqueña</h4>
-                <div class="rating">
+<!-- Featured Products -->
+<div class="small-container" id="productos">
+    <h2 class="title">Productos disponibles para envío</h2>
+    <div class="row">
+        {% for product in productos %}
+        <div class="col-4">
+            <div class="product" id="product-{{ product.id }}">
+                <img src="{{ url_for('static', filename='img/' + product.imagen) }}" alt="{{ product.nombre }}">
+                <h4>{{ product.nombre }}</h4>
+                <p>S/.{{ product.precio }}</p>
+                <button class="btn btn-primary add-to-cart" id="add-to-cart-{{ product.id }}" onclick="addToCart({{ product.id }})">Add to Cart</button>
+                <div class="quantity-controls d-none" id="quantity-controls-{{ product.id }}">
+                    <button class="btn btn-secondary" onclick="decreaseQuantity({{ product.id }})">-</button>
+                    <span id="quantity-{{ product.id }}">1</span>
+                    <button class="btn btn-secondary" onclick="increaseQuantity({{ product.id }})">+</button>
                 </div>
-                <p>S/.50.00</p>
-            </div>
-            <!-- Más productos con rutas Flask -->
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/arroz.jpg') }}"></a>
-                <h4>Arroz Costeño</h4>
-                <div class="rating"> 
-                </div>
-                <p>S/.50.00</p>
-            </div>
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/pampers.png') }}"></a>
-                <h4>Pañales Pampers</h4>
-                <div class="rating">   
-                </div>
-                <p>S/.50.00</p>
-            </div>
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/inca.png') }}"></a>
-                <h4>Inca Kola</h4>
-                <div class="rating">  
-                </div>
-                <p>S/. 50.00</p>
             </div>
         </div>
+        {% endfor %}
     </div>
+</div>
+
+
+
 
     <!-- Ofertas -->
     <div class="offer" id="ofertas">
@@ -141,6 +131,54 @@
             }
         }
     </script>
+
+    <!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!--Controlador del Carrito de compras de index-->
+<script>
+    // Controlador del botón Add to Cart
+    function addToCart(productId) {
+        // Ocultar el botón Add to Cart
+        const addToCartButton = document.getElementById(`add-to-cart-${productId}`);
+        addToCartButton.classList.add('d-none');
+        
+        // Mostrar los controles de cantidad
+        const quantityControls = document.getElementById(`quantity-controls-${productId}`);
+        quantityControls.classList.remove('d-none');
+        
+        // Inicializar la cantidad en 1
+        document.getElementById(`quantity-${productId}`).innerText = 1;
+    }
+
+    // Función para aumentar la cantidad
+    function increaseQuantity(productId) {
+        const quantityElement = document.getElementById(`quantity-${productId}`);
+        let currentQuantity = parseInt(quantityElement.innerText, 10);
+        currentQuantity++;
+        quantityElement.innerText = currentQuantity;
+    }
+
+    // Función para disminuir la cantidad
+    function decreaseQuantity(productId) {
+        const quantityElement = document.getElementById(`quantity-${productId}`);
+        let currentQuantity = parseInt(quantityElement.innerText, 10);
+        
+        // Si la cantidad es mayor a 1, disminuirla
+        if (currentQuantity > 1) {
+            currentQuantity--;
+            quantityElement.innerText = currentQuantity;
+        } else {
+            // Si la cantidad llega a 0, volver al botón Add to Cart
+            const quantityControls = document.getElementById(`quantity-controls-${productId}`);
+            quantityControls.classList.add('d-none');
+            const addToCartButton = document.getElementById(`add-to-cart-${productId}`);
+            addToCartButton.classList.remove('d-none');
+        }
+    }
+</script>
+
+
 
 </body>
 </html>

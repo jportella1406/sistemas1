@@ -148,12 +148,33 @@ def delete_user(user_id):
     return "Usuario no encontrado", 404
 
 
+# Agregar un producto al carrito
+
+@routes.route('/api/carrito', methods=['POST'])
+def add_to_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity')
+
+    if not product_id or not quantity:
+        return jsonify({'message': 'Faltan datos'}), 400
+
+    # Aquí puedes guardar el producto en una tabla de carrito (en sesión o base de datos)
+    carrito_item = Carrito(product_id=product_id, quantity=quantity)
+    db.session.add(carrito_item)
+    db.session.commit()
+
+    return jsonify({'message': 'Producto agregado al carrito'}), 201
+
+
+
 
 ### --- RUTAS HTML --- ###
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    productos = Producto.query.all()  # Obtiene todos los productos de la base de datos
+    return render_template('index.html', productos=productos)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
