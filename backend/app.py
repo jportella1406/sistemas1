@@ -12,7 +12,9 @@ db.init_app(app)
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
 
-### --- RUTAS API --- ###
+############################################################################
+######################## --- RUTAS API --- #################################
+############################################################################
 
 @routes.route('/api/login', methods=['POST'])
 def api_login():
@@ -147,9 +149,7 @@ def delete_user(user_id):
         return redirect(url_for('dashboard_usuarios'))  # Esto está correcto
     return "Usuario no encontrado", 404
 
-
 # Agregar un producto al carrito
-
 @routes.route('/api/carrito', methods=['POST'])
 def add_to_cart():
     data = request.get_json()
@@ -166,14 +166,62 @@ def add_to_cart():
 
     return jsonify({'message': 'Producto agregado al carrito'}), 201
 
+# Ruta para agregar un producto al carrito
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+    product_id = int(request.form.get('product_id'))
+    quantity = int(request.form.get('quantity', 1))
+    
+    # Buscar el producto por ID
+    product = Producto.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+    
+    # Obtener el carrito actual de la sesión
+    cart = session.get('cart', [])
+    
+    # Verificar si el producto ya está en el carrito
+    for item in cart:
+        if item['id'] == product.id:
+            item['quantity'] += quantity
+            break
+    else:
+        # Agregar el producto al carrito
+        cart.append({
+            'id': product.id,
+            'name': product.nombre,
+            'price': product.precio,
+            'quantity': quantity
+        })
+    
+    # Guardar el carrito actualizado en la sesión
+    session['cart'] = cart
+    session.modified = True
+    
+    # Calcular el total de artículos en el carrito
+    total_items = sum(item['quantity'] for item in cart)
+    
+    return jsonify({'message': 'Producto agregado al carrito', 'total_items': total_items}), 200
 
 
 
-### --- RUTAS HTML --- ###
+
+# Ruta para eliminar un producto del carrito
+@app.route('/remove_from_cart', methods=['POST'])
+def remove_from_cart():
+    product_id = request.form.get('product_id')
+    cart = session.get('cart', [])
+    session['cart'] = [item for item in cart if item['id'] != product_id]
+    return jsonify({'message': 'Producto eliminado del carrito', 'cart': session['cart']}), 200
+
+
+############################################################################
+####################### --- RUTAS HTML --- #################################
+############################################################################
 
 @app.route('/')
 def index():
-    productos = Producto.query.all()  # Obtiene todos los productos de la base de datos
+    productos = Producto.query.all()
     return render_template('index.html', productos=productos)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -213,6 +261,19 @@ def dashboard():
 @app.route('/registrar')
 def registrar():
     return redirect(url_for('registrar.html'))
+
+@app.route('/cart')
+def cart():
+    cart = session.get('cart', [])
+    # Cálculo del subtotal
+    subtotal = sum(item['price'] * item['quantity'] for item in cart)
+    # Cálculo del IGV (18% del subtotal)
+    igv = subtotal * 0.18
+    # Cálculo del total con IGV
+    total = subtotal + igv
+    print(f"Depuración del carrito: {cart}, Subtotal: {subtotal}, IGV: {igv}, Total: {total}")
+    return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
+
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)
