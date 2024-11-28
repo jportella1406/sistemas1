@@ -9,85 +9,47 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
 db.init_app(app)
 
-
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
 
-### --- Definir todas las rutas del Blueprint antes de registrarlo --- ###
+### --- RUTAS API --- ###
 
-# Endpoint para obtener todos los productos
-@routes.route('/api/productos', methods=['GET'])
-def get_productos():
-    productos = Producto.query.all()
-    return jsonify([{
-        'id': producto.id,
-        'nombre': producto.nombre,
-        'descripcion': producto.descripcion,
-        'precio': producto.precio,
-        'imagen': producto.imagen
-    } for producto in productos])
+@routes.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()  # Obtener datos enviados como JSON
+    username = data.get('username')
+    password = data.get('password')
 
-# Endpoint para crear un pedido
-@routes.route('/api/pedidos', methods=['POST'])
-def crear_pedido():
-    data = request.get_json()
-    total = data.get('total')
-    productos_data = data.get('productos')  # Lista de productos con sus cantidades
+    # Verificar si el usuario existe
+    user = Usuarios.query.filter_by(username=username).first()
 
-    pedido = Pedido(total=total)
-    db.session.add(pedido)
-    db.session.flush()  # Guarda el pedido para obtener su ID
+    if user and user.password == password:
+        # Iniciar sesión (sin sesión para API, solo devolver datos)
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+    else:
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
-    for item in productos_data:
-        producto_pedido = ProductoPedido(
-            pedido_id=pedido.id,
-            producto_id=item['producto_id'],
-            cantidad=item['cantidad']
-        )
-        db.session.add(producto_pedido)
-
-    db.session.commit()
-    return jsonify({"message": "Pedido creado con éxito", "pedido_id": pedido.id}), 201
-
-# Endpoint para filtrar productos por categoría
-@routes.route('/api/productos/categoria/<string:categoria>', methods=['GET'])
-def get_productos_por_categoria(categoria):
-    productos = Producto.query.filter_by(categoria=categoria).all()
-    return jsonify([{
-        'id': producto.id,
-        'nombre': producto.nombre,
-        'descripcion': producto.descripcion,
-        'precio': producto.precio,
-        'imagen': producto.imagen,
-        'categoria': producto.categoria
-    } for producto in productos])
-
-# Endpoint para obtener todas las categorías
-@routes.route('/api/productos/categorias', methods=['GET'])
-def get_categorias():
-    categorias = db.session.query(Producto.categoria).distinct().all()
-    return jsonify([categoria[0] for categoria in categorias])
-
-# Ruta de registro
-@app.route('/api/register', methods=['POST'])
-def register():
-    data = request.json  # Asegúrate de recibir datos en formato JSON
+@routes.route('/api/register', methods=['POST'])
+def api_register():
+    data = request.json
     nombre = data.get('nombre')
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
-    rol = data.get('rol', 'usuario')  # Valor por defecto: 'usuario'
+    rol = data.get('rol', 'usuario')  # Rol por defecto
 
-    # Validar que no falten datos
     if not all([nombre, username, email, password]):
         return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
-    # Verificar si el usuario ya existe
     existing_user = Usuarios.query.filter_by(username=username).first()
     if existing_user:
         return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
 
-    # Crear un nuevo usuario
     new_user = Usuarios(
         nombre=nombre,
         username=username,
@@ -101,81 +63,107 @@ def register():
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
 
 
-# Dashboard para ver los usuarios desde admin
+# Obtener todos los productos
+@routes.route('/api/productos', methods=['GET'])
+def get_productos():
+    productos = Producto.query.all()
+    return jsonify([{
+        'id': producto.id,
+        'nombre': producto.nombre,
+        'descripcion': producto.descripcion,
+        'precio': producto.precio,
+        'imagen': producto.imagen,
+        'categoria': producto.categoria
+    } for producto in productos])
 
-@app.route('/dashboard')
-def dashboard():
-    # Consulta a la base de datos para obtener todos los usuarios
-    usuarios = Usuarios.query.all()
-    return render_template('dashboard.html', usuarios=usuarios)
-
-
-
-# Ruta de inicio de sesión
-@routes.route('/api/login', methods=['POST'])
-def login():
+# Crear un nuevo producto
+@routes.route('/api/productos', methods=['POST'])
+def create_producto():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    nuevo_producto = Producto(
+        nombre=data['nombre'],
+        descripcion=data['descripcion'],
+        precio=data['precio'],
+        imagen=data['imagen'],
+        categoria=data['categoria']
+    )
+    db.session.add(nuevo_producto)
+    db.session.commit()
+    return jsonify({'message': 'Producto creado exitosamente'}), 201
 
-    # Verificar usuario en la tabla Usuarios
-    user = Usuarios.query.filter_by(username=username).first()
-
-    if user and user.password == password:
-        # Almacenar los datos del usuario en la sesión
-        session['user_id'] = user.user_id
-        session['username'] = user.username
-        session['role'] = user.rol
-        return jsonify({'message': 'Inicio de sesión exitoso'}), 200
-    else:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
-
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
-def delete_user(user_id):
-    user = Usuarios.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return redirect('/dashboard')
-    return "Usuario no encontrado", 404
-
-
-@app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
+# Actualizar un producto existente
+@routes.route('/api/productos/<int:producto_id>', methods=['PUT'])
+def update_producto(producto_id):
     data = request.get_json()
-    usuario = Usuarios.query.get(user_id)
+    producto = Producto.query.get(producto_id)
 
-    if not usuario:
-        return jsonify({'message': 'Usuario no encontrado'}), 404
+    if not producto:
+        return jsonify({'message': 'Producto no encontrado'}), 404
 
-    usuario.nombre = data.get('nombre', usuario.nombre)
-    usuario.email = data.get('email', usuario.email)
-    usuario.rol = data.get('rol', usuario.rol)
+    producto.nombre = data.get('nombre', producto.nombre)
+    producto.descripcion = data.get('descripcion', producto.descripcion)
+    producto.precio = data.get('precio', producto.precio)
+    producto.imagen = data.get('imagen', producto.imagen)
+    producto.categoria = data.get('categoria', producto.categoria)
 
     db.session.commit()
-    return jsonify({'message': 'Usuario actualizado con éxito'}), 200
+    return jsonify({'message': 'Producto actualizado exitosamente'}), 200
 
-### --- Rutas para Páginas HTML --- ###
+# Eliminar un producto
+@routes.route('/api/productos/<int:producto_id>', methods=['DELETE'])
+def delete_producto(producto_id):
+    producto = Producto.query.get(producto_id)
+
+    if not producto:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+
+    db.session.delete(producto)
+    db.session.commit()
+    return jsonify({'message': 'Producto eliminado exitosamente'}), 200
+
+### --- RUTAS HTML --- ###
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        # Verificar usuario y contraseña
+        user = Usuarios.query.filter_by(username=username).first()
+
+        if user and user.password == password:
+            # Configurar sesión para el usuario
+            session['user_id'] = user.user_id
+            session['username'] = user.username
+            session['role'] = user.rol
+            return redirect(url_for('dashboard_usuarios'))
+        else:
+            return "Usuario o contraseña incorrectos", 401
+
     return render_template('login.html')
 
-@app.route('/carrito')
-def carrito():
-    return render_template('carrito.html')
+@app.route('/dashboard/usuarios')
+def dashboard_usuarios():
+    usuarios = Usuarios.query.all()
+    return render_template('dash-usuarios.html', usuarios=usuarios)
+
+@app.route('/dashboard/productos')
+def dashboard_productos():
+    productos = Producto.query.all()
+    return render_template('dash-productos.html', productos=productos)
+
+@app.route('/dashboard')
+def dashboard():
+    return redirect(url_for('dashboard_usuarios'))
 
 @app.route('/registrar')
 def registrar():
-    return render_template('registrar.html')
-
-@app.route('/productos')
-def productos():
-    return render_template('productos.html')
+    return redirect(url_for('registrar.html'))
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)
