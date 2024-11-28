@@ -1,5 +1,6 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
+from prometheus_flask_exporter import PrometheusMetrics
 import os
 
 # Crear la aplicación Flask
@@ -7,6 +8,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'mercadito.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
+metrics = PrometheusMetrics(app)
 db.init_app(app)
 
 
@@ -146,6 +148,14 @@ def productos():
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)
 
-# Iniciar la aplicación Flask
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/')
+def home():
+    return "¡El backend Flask está funcionando y exponiendo métricas!"
+
+@app.route('/status')
+def status():
+    return {"status": "OK"}
+
+if __name__ == "__main__":
+    # Corre la aplicación en localhost:5000
+    app.run(host="0.0.0.0", port=5000)
