@@ -27,7 +27,12 @@
     <div class="container-fluid p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Lista de Usuarios</h2>
-        <button class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Usuario</button>
+        <button 
+          class="btn btn-primary" 
+          data-bs-toggle="modal" 
+          data-bs-target="#newUserModal">
+          <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </button>
       </div>
       <div class="card">
         <div class="card-body">
@@ -62,6 +67,49 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Nuevo Usuario -->
+  <div class="modal fade" id="newUserModal" tabindex="-1" aria-labelledby="newUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newUserModalLabel">Agregar Nuevo Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newUserForm">
+            <div class="mb-3">
+              <label for="newUserName" class="form-label">Nombre</label>
+              <input type="text" class="form-control" id="newUserName" name="nombre" required>
+            </div>
+            <div class="mb-3">
+              <label for="newUserUsername" class="form-label">Nombre de Usuario</label>
+              <input type="text" class="form-control" id="newUserUsername" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label for="newUserEmail" class="form-label">Correo</label>
+              <input type="email" class="form-control" id="newUserEmail" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="newUserRole" class="form-label">Rol</label>
+              <select class="form-select" id="newUserRole" name="rol" required>
+                <option value="admin">Admin</option>
+                <option value="usuario">Usuario</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="newUserPassword" class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="newUserPassword" name="password" required>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" onclick="addNewUser()">Guardar</button>
+            </div>
+          </form>          
         </div>
       </div>
     </div>
@@ -134,6 +182,35 @@
         alert('Hubo un error al actualizar el usuario');
       }
     }
+
+    // Envía los datos del nuevo usuario al backend
+    async function addNewUser() {
+  const nombre = document.getElementById('newUserName').value;
+  const username = document.getElementById('newUserUsername').value;
+  const email = document.getElementById('newUserEmail').value;
+  const rol = document.getElementById('newUserRole').value;
+  const password = document.getElementById('newUserPassword').value;
+
+  if (!nombre || !username || !email || !password) {
+    alert('Por favor, completa todos los campos');
+    return;
+  }
+
+  const response = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, username, email, rol, password })
+  });
+
+  if (response.ok) {
+    alert('Usuario agregado con éxito');
+    location.reload();
+  } else {
+    const error = await response.json();
+    alert(`Error: ${error.message}`);
+  }
+}
+
   </script>
 </body>
 </html>

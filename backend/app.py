@@ -71,11 +71,16 @@ def get_categorias():
 # Ruta de registro
 @app.route('/api/register', methods=['POST'])
 def register():
-    # Obtener datos del formulario
-    nombre = request.form.get('nombre')
-    email = request.form.get('email')
-    username = request.form.get('username')
-    password = request.form.get('password')
+    data = request.json  # Asegúrate de recibir datos en formato JSON
+    nombre = data.get('nombre')
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    rol = data.get('rol', 'usuario')  # Valor por defecto: 'usuario'
+
+    # Validar que no falten datos
+    if not all([nombre, username, email, password]):
+        return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
     # Verificar si el usuario ya existe
     existing_user = Usuarios.query.filter_by(username=username).first()
@@ -84,16 +89,17 @@ def register():
 
     # Crear un nuevo usuario
     new_user = Usuarios(
-        username=username,
-        password=password,  # Aquí puedes usar un hash para almacenar la contraseña de manera segura
-        rol="usuario",  # Puedes ajustar el rol según tus necesidades
         nombre=nombre,
-        email=email
+        username=username,
+        email=email,
+        password=password,
+        rol=rol
     )
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+
 
 # Dashboard para ver los usuarios desde admin
 
