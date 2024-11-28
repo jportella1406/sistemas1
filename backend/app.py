@@ -204,8 +204,6 @@ def add_to_cart():
     return jsonify({'message': 'Producto agregado al carrito', 'total_items': total_items}), 200
 
 
-
-
 # Ruta para eliminar un producto del carrito
 @app.route('/remove_from_cart', methods=['POST'])
 def remove_from_cart():
@@ -215,14 +213,52 @@ def remove_from_cart():
     return jsonify({'message': 'Producto eliminado del carrito', 'cart': session['cart']}), 200
 
 
-############################################################################
-####################### --- RUTAS HTML --- #################################
-############################################################################
+@app.route('/update-cart', methods=['POST'])
+def update_cart():
+    try:
+        data = request.get_json()  # Verifica que los datos lleguen correctamente
+        print(data)  # Depuración: verifica los datos recibidos
 
-@app.route('/')
-def index():
-    productos = Producto.query.all()
-    return render_template('index.html', productos=productos)
+        product_id = data.get('productId')
+        new_quantity = data.get('newQuantity')
+
+        if not product_id or not isinstance(new_quantity, int) or new_quantity <= 0:
+            return jsonify({"success": False, "error": "Datos inválidos"}), 400
+
+        # Obtener el carrito desde la sesión
+        cart = session.get('cart', [])
+        found = False
+
+        # Actualizar la cantidad del producto en el carrito
+        for item in cart:
+            if item['id'] == product_id:
+                item['quantity'] = new_quantity
+                found = True
+                break
+
+        if not found:
+            return jsonify({"success": False, "error": "Producto no encontrado en el carrito"}), 404
+
+        # Guardar el carrito actualizado en la sesión
+        session['cart'] = cart
+        session.modified = True
+
+        # Calcular subtotal, IGV y total
+        subtotal = sum(item['price'] * item['quantity'] for item in cart)
+        igv = subtotal * 0.18
+        total = subtotal + igv
+
+        return jsonify({
+            "success": True,
+            "subtotal": subtotal,
+            "igv": igv,
+            "total": total
+        }), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"success": False, "error": "Error del servidor"}), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
@@ -244,6 +280,16 @@ def login_page():
 
     return render_template('login.html')
 
+
+############################################################################
+####################### --- RUTAS HTML --- #################################
+############################################################################
+
+@app.route('/')
+def index():
+    productos = Producto.query.all()
+    return render_template('index.html', productos=productos)
+
 @app.route('/dashboard/usuarios')
 def dashboard_usuarios():
     usuarios = Usuarios.query.all()
@@ -262,17 +308,26 @@ def dashboard():
 def registrar():
     return redirect(url_for('registrar.html'))
 
-@app.route('/cart')
-def cart():
+@app.route('/view-cart')
+def view_cart():
     cart = session.get('cart', [])
-    # Cálculo del subtotal
+    
+    # Manejar el caso de un carrito vacío
+    if not cart:
+        return render_template('carrito.html', cart=[], subtotal=0, igv=0, total=0)
+    
+    # Cálculo del subtotal, IGV y total
     subtotal = sum(item['price'] * item['quantity'] for item in cart)
-    # Cálculo del IGV (18% del subtotal)
-    igv = subtotal * 0.18
-    # Cálculo del total con IGV
+    igv = subtotal * 0.18  # Asumiendo IGV del 18%
     total = subtotal + igv
-    print(f"Depuración del carrito: {cart}, Subtotal: {subtotal}, IGV: {igv}, Total: {total}")
+
+    # Depuración opcional para monitorear el carrito
+    print(f"Carrito actual: {cart}")
+    print(f"Subtotal: {subtotal}, IGV: {igv}, Total: {total}")
+
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
+
+
 
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###

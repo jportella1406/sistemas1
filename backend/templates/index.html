@@ -19,7 +19,9 @@
             <div class="navbar">
                 <div class="logo">
                     <!-- Ruta al logo -->
-                    <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px"></a>
+                    <a href="{{ url_for('index') }}">
+                        <img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px">
+                    </a>
                 </div>
                 <nav>
                     <ul id="MenuItems">
@@ -28,14 +30,19 @@
                         <li><a href="#ofertas">Oferta</a></li>
                         <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
                     </ul>
-                    
                 </nav>
-                <a href="{{ url_for('cart') }}" style="position: relative;">
+                <a href="{{ url_for('view_cart') }}" style="position: relative;">
                     <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
-                    <span id="cart-count" style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">0</span>
+                    <!-- Contador del carrito -->
+                    <span id="cart-count" 
+                          style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">
+                        0
+                    </span>
                 </a>
-                                <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
+                
+                <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
             </div>
+            
             <div class="row">
                 <div class="col-2">
                     <h1>Una nueva forma de comprar!</h1>

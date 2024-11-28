@@ -31,7 +31,7 @@
                     </ul>
                     
                 </nav>
-                <a href="{{ url_for('cart') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
+                <a href="{{ url_for('view_cart') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
                 <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
             </div>
         </div>
@@ -51,25 +51,29 @@
             </thead>
             <tbody>
                 {% for item in cart %}
-                <tr>
+                <tr data-id="{{ item['id'] }}">
                     <td>{{ item['name'] }}</td>
                     <td>S/.{{ "%.2f"|format(item['price']) }}</td>
-                    <td>{{ item['quantity'] }}</td>
-                    <td>S/.{{ "%.2f"|format(item['price'] * item['quantity']) }}</td>
+                    <td>
+                        <input 
+                            type="number" 
+                            value="{{ item['quantity'] }}" 
+                            class="quantity-input" 
+                            min="1" 
+                            onchange="updateQuantity(this, {{ item['id'] }})"
+                        />
+                    </td>
+                    <td class="subtotal">S/.{{ "%.2f"|format(item['price'] * item['quantity']) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         
         <!-- Mostrar cálculos adicionales -->
-        <p class="text-end"><strong>Subtotal:</strong> S/.{{ "%.2f"|format(subtotal) }}</p>
-        <p class="text-end"><strong>IGV (18%):</strong> S/.{{ "%.2f"|format(igv) }}</p>
-        <p class="text-end"><strong>Total:</strong> S/.{{ "%.2f"|format(total) }}</p>
-        
-            </tbody>
-        </table>
+        <p class="text-end"><strong>Subtotal:</strong> S/.<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span></p>
+        <p class="text-end"><strong>IGV (18%):</strong> S/.<span id="igv">{{ "%.2f"|format(igv) }}</span></p>
+        <p class="text-end"><strong>Total:</strong> S/.<span id="total">{{ "%.2f"|format(total) }}</span></p>
     </div>
-    
     
 
     <!-- Pie de página -->
@@ -115,6 +119,63 @@
             }
         }
     </script>
+
+<script>
+    function updateQuantity(inputElement, productId) {
+        // Obtén la nueva cantidad ingresada
+        const newQuantity = parseInt(inputElement.value);
+
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            alert("Por favor, ingresa una cantidad válida.");
+            inputElement.value = 1; // Restaura un valor válido
+            return;
+        }
+
+        // Encuentra la fila del producto
+        const row = inputElement.closest("tr");
+        const price = parseFloat(row.children[1].textContent.replace("S/.", ""));
+        const subtotalCell = row.querySelector(".subtotal");
+
+        // Actualiza el subtotal en la interfaz
+        subtotalCell.textContent = `S/.${(price * newQuantity).toFixed(2)}`;
+
+        // Realiza la petición al servidor para actualizar el carrito
+        fetch(`/update-cart`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}" // Si usas CSRF tokens en Flask
+    },
+    body: JSON.stringify({
+        productId: productId, // Asegúrate de que este ID sea válido
+        newQuantity: newQuantity // Asegúrate de que la cantidad sea un número válido
+    })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("HTTP error " + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+        // Actualizar los valores de subtotal, IGV y total en la página
+        document.getElementById('subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+        document.getElementById('igv').textContent = `S/. ${data.igv.toFixed(2)}`;
+        document.getElementById('total').textContent = `S/. ${data.total.toFixed(2)}`;
+        }
+    else {
+            alert("Hubo un problema al actualizar el carrito.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("No se pudo actualizar el carrito.");
+    });
+}
+</script>
+
+
 
 </body>
 
