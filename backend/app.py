@@ -121,6 +121,34 @@ def delete_producto(producto_id):
     db.session.commit()
     return jsonify({'message': 'Producto eliminado exitosamente'}), 200
 
+# Actualizar un usuario
+@app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    usuario = Usuarios.query.get(user_id)
+
+    if not usuario:
+        return jsonify({'message': 'Usuario no encontrado'}), 404
+
+    usuario.nombre = data.get('nombre', usuario.nombre)
+    usuario.email = data.get('email', usuario.email)
+    usuario.rol = data.get('rol', usuario.rol)
+
+    db.session.commit()
+    return jsonify({'message': 'Usuario actualizado con éxito'}), 200
+
+# Eliminar un usuario
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = Usuarios.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return redirect(url_for('dashboard_usuarios'))  # Esto está correcto
+    return "Usuario no encontrado", 404
+
+
+
 ### --- RUTAS HTML --- ###
 
 @app.route('/')
