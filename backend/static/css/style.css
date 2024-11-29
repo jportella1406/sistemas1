@@ -506,6 +506,9 @@ form a{
     cursor: pointer;
 }
 
-.btn-delete:hover {
-    color: darkred;
+.text-end{
+    display: flex;
+    justify-content: right;
+    gap: 10px;
+    margin-top: 10px;
 }
