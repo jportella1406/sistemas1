@@ -207,10 +207,31 @@ def add_to_cart():
 # Ruta para eliminar un producto del carrito
 @app.route('/remove_from_cart', methods=['POST'])
 def remove_from_cart():
-    product_id = request.form.get('product_id')
+    data = request.get_json()
+    product_id = data.get('productId')
+
+    if not product_id:
+        return jsonify({'success': False, 'error': 'Producto no especificado'}), 400
+
+    # Obtener el carrito actual desde la sesión
     cart = session.get('cart', [])
-    session['cart'] = [item for item in cart if item['id'] != product_id]
-    return jsonify({'message': 'Producto eliminado del carrito', 'cart': session['cart']}), 200
+    # Filtrar los productos para eliminar el especificado
+    cart = [item for item in cart if item['id'] != product_id]
+    session['cart'] = cart
+    session.modified = True
+
+    # Recalcular subtotal, IGV y total
+    subtotal = sum(item['price'] * item['quantity'] for item in cart)
+    igv = subtotal * 0.18
+    total = subtotal + igv
+
+    return jsonify({
+        'success': True,
+        'subtotal': subtotal,
+        'igv': igv,
+        'total': total
+    })
+
 
 
 @app.route('/update-cart', methods=['POST'])
@@ -279,6 +300,9 @@ def login_page():
             return "Usuario o contraseña incorrectos", 401
 
     return render_template('login.html')
+
+
+
 
 
 ############################################################################

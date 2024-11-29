@@ -498,3 +498,14 @@ form a{
     display: none; /* Oculto inicialmente si no hay productos */
 }
 
+.btn-delete {
+    color: red;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    color: darkred;
+}
