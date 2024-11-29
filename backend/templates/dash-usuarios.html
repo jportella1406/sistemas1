@@ -75,7 +75,9 @@
                       onclick="openEditModal({{ usuario.user_id }}, '{{ usuario.nombre }}', '{{ usuario.email }}', '{{ usuario.rol }}')">
                       <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar</button>
+                    <form method="POST" action="{{ url_for('delete_user', user_id=usuario.user_id) }}" style="display:inline;">
+                      <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar</button>
+                    </form>
                   </td>
                 </tr>
                 {% endfor %}

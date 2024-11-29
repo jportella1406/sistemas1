@@ -13,6 +13,14 @@ body{
     display: flex;
     align-items: center;
     padding: 20px;
+    position: fixed; /* Fija la barra en la parte superior */
+    top: 0; /* Posición superior */
+    left: 0; /* Asegura que esté alineada a la izquierda */
+    width: 100%; /* La barra ocupa todo el ancho */
+    background-color: white; /* Fondo blanco para mayor visibilidad */
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Agrega una sombra ligera */
+    height: 100px;
 }
 
 nav{
@@ -448,4 +456,56 @@ form a{
     .cart-info p{
         display: none;
     }
+}
+
+.quantity-selector {
+    display: inline-flex;
+    align-items: center;
+}
+.quantity-selector button {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    line-height: 1;
+}
+.quantity-selector input {
+    text-align: center;
+    font-size: 16px;
+    padding: 0;
+}
+
+.d-none {
+    display: none;
+}
+
+/*Estilos para el boton de seleccion de productos del index.html*/
+
+.quantity-controls {
+    align-items: center; /* Centra verticalmente */
+    justify-content: center; /* Centra horizontalmente */
+    gap: 10px; /* Espaciado entre los elementos */
+}
+
+#cart-count {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    display: none; /* Oculto inicialmente si no hay productos */
+}
+
+.btn-delete {
+    color: red;
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    color: darkred;
 }

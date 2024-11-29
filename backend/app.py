@@ -2,6 +2,7 @@ from flask import Flask, Blueprint, jsonify, request, session, render_template, 
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 from prometheus_flask_exporter import PrometheusMetrics
 import os
+import bcrypt
 
 # Crear la aplicación Flask
 app = Flask(__name__)
@@ -14,55 +15,75 @@ db.init_app(app)
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
 
-### --- RUTAS API --- ###
+############################################################################
+######################## --- RUTAS API --- #################################
+############################################################################
 
 @routes.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json()  # Obtener datos enviados como JSON
-    username = data.get('username')
-    password = data.get('password')
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
 
-    # Verificar si el usuario existe
-    user = Usuarios.query.filter_by(username=username).first()
+        user = Usuarios.query.filter_by(username=username).first()
 
-    if user and user.password == password:
-        # Iniciar sesión (sin sesión para API, solo devolver datos)
-        return jsonify({
-            'message': 'Inicio de sesión exitoso',
-            'user_id': user.user_id,
-            'username': user.username,
-            'role': user.rol
-        }), 200
-    else:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            return jsonify({
+                'message': 'Inicio de sesión exitoso',
+                'user_id': user.user_id,
+                'username': user.username,
+                'role': user.rol
+            }), 200
+        else:
+            return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+    except Exception as e:
+        # Captura el error y devuelve un mensaje útil
+        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+
 
 @routes.route('/api/register', methods=['POST'])
 def api_register():
-    data = request.json
-    nombre = data.get('nombre')
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
-    rol = data.get('rol', 'usuario')  # Rol por defecto
+    try:
+        # Intentar obtener datos como JSON primero
+        if request.is_json:
+            data = request.json
+        else:
+            # Si no es JSON, obtenerlos desde form-urlencoded
+            data = request.form.to_dict()
 
-    if not all([nombre, username, email, password]):
-        return jsonify({'message': 'Faltan campos obligatorios'}), 400
+        nombre = data.get('nombre')
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        rol = data.get('rol', 'usuario')  # Rol por defecto
 
-    existing_user = Usuarios.query.filter_by(username=username).first()
-    if existing_user:
-        return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
+        if not all([nombre, username, email, password]):
+            return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
-    new_user = Usuarios(
-        nombre=nombre,
-        username=username,
-        email=email,
-        password=password,
-        rol=rol
-    )
-    db.session.add(new_user)
-    db.session.commit()
+        existing_user = Usuarios.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
 
-    return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+        # Hashear la contraseña antes de guardarla
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Crear un nuevo usuario
+        new_user = Usuarios(
+            nombre=nombre,
+            username=username,
+            email=email,
+            password=hashed_password.decode('utf-8'),  # Almacenar como string
+            rol=rol
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+    except Exception as e:
+        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+
+
 
 
 # Obtener todos los productos
@@ -123,11 +144,163 @@ def delete_producto(producto_id):
     db.session.commit()
     return jsonify({'message': 'Producto eliminado exitosamente'}), 200
 
-### --- RUTAS HTML --- ###
+# Actualizar un usuario
+@app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    usuario = Usuarios.query.get(user_id)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    if not usuario:
+        return jsonify({'message': 'Usuario no encontrado'}), 404
+
+    usuario.nombre = data.get('nombre', usuario.nombre)
+    usuario.email = data.get('email', usuario.email)
+    usuario.rol = data.get('rol', usuario.rol)
+
+    db.session.commit()
+    return jsonify({'message': 'Usuario actualizado con éxito'}), 200
+
+# Eliminar un usuario
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = Usuarios.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return redirect(url_for('dashboard_usuarios'))  # Esto está correcto
+    return "Usuario no encontrado", 404
+
+# Agregar un producto al carrito
+@routes.route('/api/carrito', methods=['POST'])
+def add_to_cart():
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity')
+
+    if not product_id or not quantity:
+        return jsonify({'message': 'Faltan datos'}), 400
+
+    # Aquí puedes guardar el producto en una tabla de carrito (en sesión o base de datos)
+    carrito_item = Carrito(product_id=product_id, quantity=quantity)
+    db.session.add(carrito_item)
+    db.session.commit()
+
+    return jsonify({'message': 'Producto agregado al carrito'}), 201
+
+# Ruta para agregar un producto al carrito
+@app.route('/add_to_cart', methods=['POST'])
+def add_to_cart():
+    product_id = int(request.form.get('product_id'))
+    quantity = int(request.form.get('quantity', 1))
+    
+    # Buscar el producto por ID
+    product = Producto.query.get(product_id)
+    if not product:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+    
+    # Obtener el carrito actual de la sesión
+    cart = session.get('cart', [])
+    
+    # Verificar si el producto ya está en el carrito
+    for item in cart:
+        if item['id'] == product.id:
+            item['quantity'] += quantity
+            break
+    else:
+        # Agregar el producto al carrito
+        cart.append({
+            'id': product.id,
+            'name': product.nombre,
+            'price': product.precio,
+            'quantity': quantity
+        })
+    
+    # Guardar el carrito actualizado en la sesión
+    session['cart'] = cart
+    session.modified = True
+    
+    # Calcular el total de artículos en el carrito
+    total_items = sum(item['quantity'] for item in cart)
+    
+    return jsonify({'message': 'Producto agregado al carrito', 'total_items': total_items}), 200
+
+
+# Ruta para eliminar un producto del carrito
+@app.route('/remove_from_cart', methods=['POST'])
+def remove_from_cart():
+    data = request.get_json()
+    product_id = data.get('productId')
+
+    if not product_id:
+        return jsonify({'success': False, 'error': 'Producto no especificado'}), 400
+
+    # Obtener el carrito actual desde la sesión
+    cart = session.get('cart', [])
+    # Filtrar los productos para eliminar el especificado
+    cart = [item for item in cart if item['id'] != product_id]
+    session['cart'] = cart
+    session.modified = True
+
+    # Recalcular subtotal, IGV y total
+    subtotal = sum(item['price'] * item['quantity'] for item in cart)
+    igv = subtotal * 0.18
+    total = subtotal + igv
+
+    return jsonify({
+        'success': True,
+        'subtotal': subtotal,
+        'igv': igv,
+        'total': total
+    })
+
+
+
+@app.route('/update-cart', methods=['POST'])
+def update_cart():
+    try:
+        data = request.get_json()  # Verifica que los datos lleguen correctamente
+        print(data)  # Depuración: verifica los datos recibidos
+
+        product_id = data.get('productId')
+        new_quantity = data.get('newQuantity')
+
+        if not product_id or not isinstance(new_quantity, int) or new_quantity <= 0:
+            return jsonify({"success": False, "error": "Datos inválidos"}), 400
+
+        # Obtener el carrito desde la sesión
+        cart = session.get('cart', [])
+        found = False
+
+        # Actualizar la cantidad del producto en el carrito
+        for item in cart:
+            if item['id'] == product_id:
+                item['quantity'] = new_quantity
+                found = True
+                break
+
+        if not found:
+            return jsonify({"success": False, "error": "Producto no encontrado en el carrito"}), 404
+
+        # Guardar el carrito actualizado en la sesión
+        session['cart'] = cart
+        session.modified = True
+
+        # Calcular subtotal, IGV y total
+        subtotal = sum(item['price'] * item['quantity'] for item in cart)
+        igv = subtotal * 0.18
+        total = subtotal + igv
+
+        return jsonify({
+            "success": True,
+            "subtotal": subtotal,
+            "igv": igv,
+            "total": total
+        }), 200
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"success": False, "error": "Error del servidor"}), 500
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
@@ -149,6 +322,19 @@ def login_page():
 
     return render_template('login.html')
 
+
+
+
+
+############################################################################
+####################### --- RUTAS HTML --- #################################
+############################################################################
+
+@app.route('/')
+def index():
+    productos = Producto.query.all()
+    return render_template('index.html', productos=productos)
+
 @app.route('/dashboard/usuarios')
 def dashboard_usuarios():
     usuarios = Usuarios.query.all()
@@ -165,7 +351,35 @@ def dashboard():
 
 @app.route('/registrar')
 def registrar():
-    return redirect(url_for('registrar.html'))
+    return render_template('registrar.html')
+
+@app.route('/view-cart')
+def view_cart():
+    cart = session.get('cart', [])
+    
+    # Manejar el caso de un carrito vacío
+    if not cart:
+        return render_template('carrito.html', cart=[], subtotal=0, igv=0, total=0)
+    
+    # Cálculo del subtotal, IGV y total
+    subtotal = sum(item['price'] * item['quantity'] for item in cart)
+    igv = subtotal * 0.18  # Asumiendo IGV del 18%
+    total = subtotal + igv
+
+    # Depuración opcional para monitorear el carrito
+    print(f"Carrito actual: {cart}")
+    print(f"Subtotal: {subtotal}, IGV: {igv}, Total: {total}")
+
+    return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
+
+@routes.route('/api/check-login', methods=['GET'])
+def check_login():
+    if 'user_id' in session:
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 200
+
+
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)

@@ -29,13 +29,10 @@
           </div>
           <nav>
               <ul id="MenuItems">
-                  <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                  <li><a href="#productos">Productos</a></li>
-                  <li><a href="#ofertas">Oferta</a></li>
                   <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
               </ul>
           </nav>
-          <a href="{{ url_for('carrito') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
+          <a href="{{ url_for('view_cart') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
           <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
         </div>
       </div>
