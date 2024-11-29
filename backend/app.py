@@ -1,6 +1,8 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 from prometheus_flask_exporter import PrometheusMetrics
+from cryptography.fernet import Fernet
+import base64
 import os
 import bcrypt
 
@@ -14,6 +16,10 @@ db.init_app(app)
 
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
+
+# Generar una clave secreta (haz esto una vez y guárdala en un lugar seguro)
+SECRET_KEY = os.getenv('SECRET_KEY') or Fernet.generate_key()
+cipher_suite = Fernet(SECRET_KEY)
 
 ############################################################################
 ######################## --- RUTAS API --- #################################
@@ -143,6 +149,59 @@ def delete_producto(producto_id):
     db.session.delete(producto)
     db.session.commit()
     return jsonify({'message': 'Producto eliminado exitosamente'}), 200
+
+# Función para cifrar datos
+def encrypt_data(data: str) -> str:
+    """Cifra un texto en formato base64."""
+    encrypted_data = cipher_suite.encrypt(data.encode())
+    return base64.urlsafe_b64encode(encrypted_data).decode()
+
+# Función para descifrar datos
+def decrypt_data(encrypted_data: str) -> str:
+    """Descifra un texto cifrado en formato base64."""
+    try:
+        decoded_data = base64.urlsafe_b64decode(encrypted_data.encode())
+        return cipher_suite.decrypt(decoded_data).decode()
+    except Exception:
+        return None
+
+# Función para generar un ID único y aleatorio relacionado al producto
+def generate_random_id(product_id: int) -> str:
+    """Genera un ID aleatorio único basado en el ID del producto."""
+    random_suffix = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+    return f"{product_id}-{random_suffix}"
+
+# Ruta para generar un enlace seguro a un producto
+@app.route('/generate_product_url/<int:product_id>')
+def generate_product_url(product_id):
+    # Generar un ID aleatorio relacionado al producto
+    random_id = generate_random_id(product_id)
+    encrypted_id = encrypt_data(random_id)  # Cifrar el ID aleatorio
+    secure_url = f"http://127.0.0.1:5000/product/{encrypted_id}"
+    return jsonify({'secure_url': secure_url})
+
+# Ruta para ver el detalle del producto a través de una URL cifrada
+@app.route('/product/<encrypted_id>')
+def product_detail(encrypted_id):
+    # Descifrar el ID aleatorio
+    decrypted_data = decrypt_data(encrypted_id)
+    if not decrypted_data:
+        return jsonify({'message': 'Invalid or tampered URL'}), 400
+
+    # Extraer el ID del producto desde el dato descifrado
+    product_id = decrypted_data.split('-')[0]
+    
+    # Buscar el producto en la base de datos (esto es un ejemplo, ajusta a tu modelo)
+    productos = {
+        "1": {"id": 1, "name": "Cerveza Cusqueña", "price": 6.0, "description": "Botella de cerveza 350ml"},
+        "2": {"id": 2, "name": "Arroz Costeño", "price": 8.0, "description": "Bolsa de arroz de 5kg"},
+    }
+
+    product = productos.get(product_id)
+    if not product:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+
+    return jsonify(product)
 
 # Actualizar un usuario
 @app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
