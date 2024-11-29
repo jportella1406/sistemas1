@@ -59,6 +59,9 @@
                             min="1" 
                             onchange="updateQuantity(this, {{ item['id'] }})"
                         />
+                        <button class="btn-delete" onclick="deleteProduct({{ item['id'] }})">
+                            ✖
+                        </button>
                     </td>
                     <td class="subtotal">S/.{{ "%.2f"|format(item['price'] * item['quantity']) }}</td>
                 </tr>
@@ -172,6 +175,45 @@
 }
 </script>
 
+<script>
+    function deleteProduct(productId) {
+        if (confirm("¿Estás seguro de que deseas eliminar este producto del carrito?")) {
+            fetch('/remove_from_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // Si usas CSRF tokens
+                },
+                body: JSON.stringify({ productId: productId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Eliminar la fila del producto de la tabla
+                    const row = document.querySelector(`tr[data-id='${productId}']`);
+                    if (row) {
+                        row.remove();
+                    }
+                    // Actualizar los totales
+                    document.getElementById('subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+                    document.getElementById('igv').textContent = `S/. ${data.igv.toFixed(2)}`;
+                    document.getElementById('total').textContent = `S/. ${data.total.toFixed(2)}`;
+                } else {
+                    alert("No se pudo eliminar el producto del carrito.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Ocurrió un error al eliminar el producto.");
+            });
+        }
+    }
+</script>
 
 
 </body>
