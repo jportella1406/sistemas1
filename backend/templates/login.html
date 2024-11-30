@@ -41,20 +41,20 @@
 
     <div class="login-page">
       <div class="form">
-
+    
         <form onsubmit="login(event)">
-          <lottie-player src="https://assets4.lottiefiles.com/datafiles/XRVoUu3IX4sGWtiC3MPpFnJvZNq7lVWDCa8LSqgS/profile.json" background="transparent" speed="1" style="justify-content: center;" loop autoplay></lottie-player>
+          <lottie-player src="https://assets4.lottiefiles.com/datafiles/XRVoUu3IX4sGWtiC3MPpFnJvZNq7lVWDCa8LSqgS/profile.json" 
+                         background="transparent" speed="1" 
+                         style="justify-content: center;" loop autoplay></lottie-player>
           <input type="text" id="username" placeholder="&#xf007; username" required />
           <input type="password" id="password" placeholder="&#xf023; password" required />
           <i class="fas fa-eye" onclick="show()"></i>
-          <br>
-          <br>
+          <br><br>
           <button type="submit">Iniciar Sesión</button>
           <p id="loginMessage" class="message"></p>
         </form>
-
-        <form class="login-form">
-        </form>
+    
+        <form class="login-form"></form>
         <button onclick="redirectToRegister()">Registrarse</button>
       </div>
     </div>
@@ -90,35 +90,41 @@
     </div>
 
     <script>
-      function login(event) {
-        event.preventDefault();
+      async function login(event) {
+        event.preventDefault(); // Evitar el comportamiento por defecto del formulario
+    
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-
-        fetch('http://127.0.0.1:5000/api/login', { // Asegúrate de que coincide con el endpoint de Flask
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.message === 'Inicio de sesión exitoso') {
-            alert(data.message);
-            window.location.href = "{{ url_for('index') }}"; // Redirige a la página principal
+    
+        try {
+          // Enviar los datos de inicio de sesión a la API
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+    
+          const data = await response.json();
+    
+          if (response.ok) {
+            // Redirigir basado en el rol
+            if (data.role === 'admin') {
+              window.location.href = '/dashboard/usuarios'; // Redirige al dashboard de usuarios
+            } else {
+              window.location.href = '/'; // Redirige al índice principal
+            }
           } else {
+            // Mostrar mensaje de error si las credenciales son incorrectas
             document.getElementById('loginMessage').textContent = data.message;
           }
-        })
-        .catch(error => {
+        } catch (error) {
           console.error('Error:', error);
-          document.getElementById('loginMessage').textContent = 'Error al conectar con el servidor';
-        });
+          document.getElementById('loginMessage').textContent = 'Ocurrió un error al iniciar sesión.';
+        }
       }
-
+    
       function redirectToRegister() {
-        window.location.href = "{{ url_for('registrar') }}";  // Redirige a la página de registro
+        window.location.href = '/registrar';
       }
     </script>
 </body>

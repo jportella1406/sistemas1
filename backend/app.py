@@ -18,7 +18,7 @@ routes = Blueprint('routes', __name__)
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json()  # Obtener datos enviados como JSON
+    data = request.get_json()
     username = data.get('username')
     password = data.get('password')
 
@@ -26,9 +26,9 @@ def api_login():
     user = Usuarios.query.filter_by(username=username).first()
 
     if user and user.password == password:
-        # Guardar datos del usuario en la sesión
         session['user_id'] = user.user_id
-        session['username'] = user.username  # Este es el nombre que usaremos en el mensaje
+        session['username'] = user.username
+        session['role'] = user.rol  # Guardar el rol en la sesión
         return jsonify({
             'message': 'Inicio de sesión exitoso',
             'user_id': user.user_id,
@@ -37,6 +37,7 @@ def api_login():
         }), 200
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
 
 
 @routes.route('/api/register', methods=['POST'])
@@ -296,12 +297,23 @@ def login_page():
         if user and user.password == password:
             # Configurar sesión para el usuario
             session['user_id'] = user.user_id
-            session['username'] = user.username  # Aquí guardamos el nombre de usuario
-            return redirect(url_for('index'))
+            session['username'] = user.username
+            session['role'] = user.rol  # Guardar el rol en la sesión para usarlo en otras rutas
+
+            # Depuración: Verificar si el rol se asigna correctamente
+            print(f"Usuario logeado: {user.username}, Rol: {user.rol}")
+
+            # Redirigir según el rol del usuario
+            if session['role'] == 'admin':  # Cambia 'admin' al valor exacto de tu base de datos
+                return redirect(url_for('dashboard_usuarios'))
+            else:
+                return redirect(url_for('index'))
         else:
             return "Usuario o contraseña incorrectos", 401
 
     return render_template('login.html')
+
+
 
 
 @app.route('/logout')
@@ -327,8 +339,13 @@ def index():
 
 @app.route('/dashboard/usuarios')
 def dashboard_usuarios():
-    usuarios = Usuarios.query.all()
+    # Verifica si el usuario es administrador
+    if session.get('role') != 'admin':
+        return redirect(url_for('index'))  # Redirige a index si no es admin
+
+    usuarios = Usuarios.query.all()  # Aquí obtendrás todos los usuarios
     return render_template('dash-usuarios.html', usuarios=usuarios)
+
 
 @app.route('/dashboard/productos')
 def dashboard_productos():
@@ -337,7 +354,11 @@ def dashboard_productos():
 
 @app.route('/dashboard')
 def dashboard():
-    return redirect(url_for('dashboard_usuarios'))
+    # Verifica si el usuario es un administrador
+    if session.get('role') != 'admin':
+        return redirect(url_for('index'))  # Redirige a index si no es admin
+    return render_template('dash-usuarios.html')  # Renderiza el dashboard
+
 
 @app.route('/registrar')
 def registrar():
