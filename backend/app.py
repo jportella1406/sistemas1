@@ -16,7 +16,7 @@ routes = Blueprint('routes', __name__)
 ######################## --- RUTAS API --- #################################
 ############################################################################
 
-@routes.route('/api/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def api_login():
     data = request.get_json()  # Obtener datos enviados como JSON
     username = data.get('username')
@@ -26,7 +26,9 @@ def api_login():
     user = Usuarios.query.filter_by(username=username).first()
 
     if user and user.password == password:
-        # Iniciar sesión (sin sesión para API, solo devolver datos)
+        # Guardar datos del usuario en la sesión
+        session['user_id'] = user.user_id
+        session['username'] = user.username  # Este es el nombre que usaremos en el mensaje
         return jsonify({
             'message': 'Inicio de sesión exitoso',
             'user_id': user.user_id,
@@ -35,6 +37,7 @@ def api_login():
         }), 200
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
 
 @routes.route('/api/register', methods=['POST'])
 def api_register():
@@ -293,13 +296,20 @@ def login_page():
         if user and user.password == password:
             # Configurar sesión para el usuario
             session['user_id'] = user.user_id
-            session['username'] = user.username
-            session['role'] = user.rol
-            return redirect(url_for('dashboard_usuarios'))
+            session['username'] = user.username  # Aquí guardamos el nombre de usuario
+            return redirect(url_for('index'))
         else:
             return "Usuario o contraseña incorrectos", 401
 
     return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    # Limpia la sesión del usuario
+    session.clear()
+    return redirect(url_for('index'))
+
 
 
 
@@ -311,6 +321,7 @@ def login_page():
 
 @app.route('/')
 def index():
+    print(f"Usuario logeado: {session.get('username')}")
     productos = Producto.query.all()
     return render_template('index.html', productos=productos)
 
