@@ -106,7 +106,7 @@
         .then(data => {
           if (data.message === 'Inicio de sesión exitoso') {
             alert(data.message);
-            window.location.href = "{{ url_for('dashboard') }}"; // Redirige a la página principal
+            window.location.href = "{{ url_for('index') }}"; // Redirige a la página principal
           } else {
             document.getElementById('loginMessage').textContent = data.message;
           }
