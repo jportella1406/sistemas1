@@ -12,7 +12,7 @@ body{
 {
     display: flex;
     align-items: center;
-    padding: 20px;
+    padding: 40px;
     position: fixed; /* Fija la barra en la parte superior */
     top: 0; /* Posición superior */
     left: 0; /* Asegura que esté alineada a la izquierda */
@@ -82,6 +82,7 @@ p{
 }
 .header{
     background: radial-gradient(#fff,#FFF4E1);
+    padding-top: 30px;
 }
 .header .row{
     margin-top: 70px;
@@ -102,6 +103,7 @@ p{
     margin: auto;
     padding-left: 25px;
     padding-right: 25px;
+    padding-top: 40px;
 }
 .col-4{
     flex-basis: 25%;

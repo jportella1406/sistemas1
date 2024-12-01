@@ -30,11 +30,11 @@
                 </nav>
                 {% if session.get('username') %}
                     <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
-                    <div style="display: inline-block; margin-left: 20px; font-size: 14px; color: green; font-weight: bold;">
+                    <div style="display: inline-block; margin-left: 20px; margin-right: 20px; font-size: 14px; color: green; font-weight: bold;">
                         Bienvenido {{ session['username'] }}
                     </div>
                     <!-- Mostrar el enlace de cerrar sesión -->
-                    <a href="{{ url_for('logout') }}" style="margin-left: 10px; font-size: 14px; color: red;">Cerrar sesión</a>
+                    <a href="{{ url_for('logout') }}" style="margin-left: 10px; margin-right: 20px; font-size: 14px; color: red;">Cerrar sesión</a>
                 {% endif %}
                 <a href="{{ url_for('view_cart') }}" style="position: relative;">
                     <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
@@ -172,7 +172,7 @@
     <!--Controlador del Carrito de compras de index-->
 <script>
     // Controlador del botón Add to Cart
-    function addToCart(event, productId, productPrice) {
+function addToCart(event, productId, productPrice) {
     event.preventDefault(); // Evita recargar la página
 
     // Comprobar si el usuario está logeado
