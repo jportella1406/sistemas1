@@ -143,7 +143,6 @@ def update_user(user_id):
     db.session.commit()
     return jsonify({'message': 'Usuario actualizado con éxito'}), 200
 
-<<<<<<< HEAD
 # Eliminar un usuario
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
@@ -155,10 +154,6 @@ def delete_user(user_id):
     return "Usuario no encontrado", 404
 
 
-=======
-
-# Ruta para agregar un producto al carrito
->>>>>>> 20101a3f1627452ae440fa7b75f78a6e017b9b53
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     # Verificar si el usuario está autenticado
