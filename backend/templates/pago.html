@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mercadito.pe</title>
+    <!-- Ruta para el CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+</head>
+
+<body>
+    <!--Barra de navegacion-->
+    <div class="header">
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">
+                    <!-- Ruta al logo -->
+                    <a href="{{ url_for('index') }}">
+                        <img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px">
+                    </a>
+                </div>
+                <nav>
+                    <ul id="MenuItems">
+                        <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
+                    </ul>
+                </nav>
+                {% if session.get('username') %}
+                    <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
+                    <div style="display: inline-block; margin-left: 20px; margin-right: 20px; font-size: 14px; color: green; font-weight: bold;">
+                        Bienvenido {{ session['username'] }}
+                    </div>
+                    <!-- Mostrar el enlace de cerrar sesión -->
+                    <a href="{{ url_for('logout') }}" style="margin-left: 10px; margin-right: 20px; font-size: 14px; color: red;">Cerrar sesión</a>
+                {% endif %}
+                <a href="{{ url_for('view_cart') }}" style="position: relative;">
+                    <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
+                    <!-- Contador del carrito -->
+                    <span id="cart-count" 
+                          style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">
+                        0
+                    </span>
+                </a>
+                <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Pie de página -->
+    <div class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="footer-col-2">
+                    <img src="{{ url_for('static', filename='img/logo_corto.png') }}">
+                    <p style="color: white;">Nuestro propósito es llegar a su hogar de la manera más accesible y a tiempo.
+                    </p>
+                </div>
+                <div class="footer-col-3">
+                    <h3>Mi cuenta</h3>
+                    <ul>
+                        <li>Iniciar Sesión</li>
+                    </ul>
+                </div>
+                <div class="footer-col-4">
+                    <h3>Follow Us</h3>
+                    <ul>
+                        <li>Facebook</li>
+                        <li>Twitter</li>
+                        <li>Instagram</li>
+                        <li>Youtube</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <p class="copyright">Copyright 2024 - Jose Portella</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -372,7 +372,10 @@ def view_cart():
 
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 
-
+@app.route('/payment')
+def payment_page():
+    # Aquí se renderiza la página de pago
+    return render_template('pago.html')
 
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###

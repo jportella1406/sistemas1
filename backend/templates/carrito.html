@@ -89,8 +89,24 @@
         <p class="text-end"><strong>Subtotal:</strong> S/.<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span></p>
         <p class="text-end"><strong>IGV (18%):</strong> S/.<span id="igv">{{ "%.2f"|format(igv) }}</span></p>
         <p class="text-end"><strong>Total:</strong> S/.<span id="total">{{ "%.2f"|format(total) }}</span></p>
+
+       <!-- Botón "Proceder al pago" -->
+        <div style="text-align: right; margin-top: 20px;">
+            {% if cart and cart|length > 0 %}
+            <a href="{{ url_for('payment_page') }}" class="btn btn-primary" 
+            style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                Proceder al pago
+            </a>
+            {% else %}
+            <button class="btn btn-secondary" disabled 
+                    style="padding: 10px 20px; text-decoration: none; border-radius: 5px; font-size: 16px;">
+                Proceder al pago
+            </button>
+            {% endif %}
+        </div>
     </div>
     
+
 
     <!-- Pie de página -->
     <div class="footer">
