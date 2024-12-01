@@ -48,21 +48,26 @@ def api_register():
     email = data.get('email')
     password = data.get('password')
     rol = data.get('rol', 'usuario')  # Rol por defecto
-    direccion = data.get('direccion', '')  # Handle the new field
+    direccion = data.get('direccion')  # Handle the new field
 
-    if not all([nombre, username, email, password]):
+    if not all([nombre, username, email, password, direccion]):
         return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
     existing_user = Usuarios.query.filter_by(username=username).first()
     if existing_user:
         return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
+    
+    existing_email = Usuarios.query.filter_by(email=email).first()
+    if existing_email:
+        return jsonify({'message': 'La direccion de correo ya está en uso'}), 400
 
     new_user = Usuarios(
         nombre=nombre,
         username=username,
         email=email,
         password=password,
-        rol=rol
+        rol=rol,
+        direccion=direccion
     )
     db.session.add(new_user)
     db.session.commit()
@@ -381,7 +386,7 @@ def dashboard():
 def registrar():
     return render_template('registrar.html')
 
-@app.route('/view-cart')
+@app.route('/carritoDeCompras')
 def view_cart():
     cart = session.get('cart', [])
     
@@ -393,10 +398,6 @@ def view_cart():
     subtotal = sum(item['price'] * item['quantity'] for item in cart)
     igv = subtotal * 0.18  # Asumiendo IGV del 18%
     total = subtotal + igv
-
-    # Depuración opcional para monitorear el carrito
-    print(f"Carrito actual: {cart}")
-    print(f"Subtotal: {subtotal}, IGV: {igv}, Total: {total}")
 
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 

@@ -123,6 +123,7 @@
     const email = form.querySelector('input[name="email"]').value;
     const username = form.querySelector('input[name="username"]').value;
     const password = form.querySelector('input[name="password"]').value;
+    const direccion = form.querySelector('input[name="direccion"]').value
 
     // Validar el formato del correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -142,7 +143,7 @@
     }
 
     // Validar que los campos obligatorios no estén vacíos
-    if (!nombre || !username || !email || !password) {
+    if (!nombre || !username || !email || !password || !direccion) {
         const message = document.getElementById('registerMessage');
         message.style.color = 'red';
         message.textContent = 'Por favor, completa todos los campos obligatorios.';
@@ -153,7 +154,7 @@
     fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, username, email, password }),
+        body: JSON.stringify({ nombre, username, email, password, direccion }),
     })
         .then(response => response.json())
         .then(data => {

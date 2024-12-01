@@ -46,10 +46,11 @@ class Usuarios(db.Model):
     rol = db.Column(db.String(10), nullable=False, default='usuario')
     direccion = db.Column(db.String(255), nullable=True) 
 
-    def __init__(self, username, password, rol, nombre=None, email=None):
+    def __init__(self, username, password, rol, nombre=None, email=None, direccion=None):
         self.username = username
         self.password = password
         self.rol = rol
         self.nombre = nombre
         self.email = email
+        self.direccion = direccion
 
