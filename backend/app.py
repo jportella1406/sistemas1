@@ -143,32 +143,6 @@ def update_user(user_id):
     db.session.commit()
     return jsonify({'message': 'Usuario actualizado con éxito'}), 200
 
-# Eliminar un usuario
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
-def delete_user(user_id):
-    user = Usuarios.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return redirect(url_for('dashboard_usuarios'))  # Esto está correcto
-    return "Usuario no encontrado", 404
-
-# Agregar un producto al carrito
-@routes.route('/api/carrito', methods=['POST'])
-def add_to_cart():
-    data = request.get_json()
-    product_id = data.get('product_id')
-    quantity = data.get('quantity')
-
-    if not product_id or not quantity:
-        return jsonify({'message': 'Faltan datos'}), 400
-
-    # Aquí puedes guardar el producto en una tabla de carrito (en sesión o base de datos)
-    carrito_item = Carrito(product_id=product_id, quantity=quantity)
-    db.session.add(carrito_item)
-    db.session.commit()
-
-    return jsonify({'message': 'Producto agregado al carrito'}), 201
 
 # Ruta para agregar un producto al carrito
 @app.route('/add_to_cart', methods=['POST'])
@@ -314,16 +288,11 @@ def login_page():
     return render_template('login.html')
 
 
-
-
 @app.route('/logout')
 def logout():
     # Limpia la sesión del usuario
     session.clear()
     return redirect(url_for('index'))
-
-
-
 
 
 
