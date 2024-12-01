@@ -60,28 +60,28 @@ cipher_suite = Fernet(SECRET_KEY)
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
+    # Obtener los datos JSON del request
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
-        user = Usuarios.query.filter_by(username=username).first()
+    # Verificar si el usuario existe
+    user = Usuarios.query.filter_by(username=username).first()
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            return jsonify({
-                'message': 'Inicio de sesión exitoso',
-                'user_id': user.user_id,
-                'username': user.username,
-                'role': user.rol
-            }), 200
-        else:
-            return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
-    except Exception as e:
-        # Captura el error y devuelve un mensaje útil
-        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+    if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        # Guardar el usuario en la sesión
+        session['user_id'] = user.user_id
+        session['username'] = user.username
+        session['role'] = user.rol  # Guardar el rol en la sesión
 
-
-
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+    else:
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
 @routes.route('/api/register', methods=['POST'])
 def api_register():
@@ -579,32 +579,6 @@ def check_login():
         return jsonify({'logged_in': True}), 200
     else:
         return jsonify({'logged_in': False}), 200
-
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    # Log de actividad (cuando alguien intente iniciar sesión)
-    app.logger.info(f"Intento de inicio de sesión con usuario: {username}")
-    
-    # Verificar si el usuario existe
-    user = Usuarios.query.filter_by(username=username).first()
-
-    if user and user.password == password:
-        # Éxito, logueamos la acción
-        app.logger.info(f"Inicio de sesión exitoso para usuario: {username}")
-        return jsonify({
-            'message': 'Inicio de sesión exitoso',
-            'user_id': user.user_id,
-            'username': user.username,
-            'role': user.rol
-        }), 200
-    else:
-        # Error, logueamos el intento fallido
-        app.logger.error(f"Error en inicio de sesión para usuario: {username}")
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
 # Ruta principal para probar
 @app.route('/')
