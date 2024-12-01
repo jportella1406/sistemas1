@@ -332,8 +332,14 @@ def dashboard_usuarios():
 
 @app.route('/dashboard/productos')
 def dashboard_productos():
+    # Verifica si el usuario está logueado y tiene rol de admin
+    if session.get('role') != 'admin':
+        return redirect(url_for('index'))  # Redirige al índice si no es admin
+    
+    # Carga los productos si el usuario es admin
     productos = Producto.query.all()
     return render_template('dash-productos.html', productos=productos)
+
 
 @app.route('/dashboard')
 def dashboard():

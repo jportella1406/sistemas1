@@ -12,8 +12,10 @@
   <div class="d-flex">
     <!-- Barra lateral -->
     <div class="bg-primary text-white p-3 vh-100" style="width: 250px;">
-      <h5 class="text-center mb-4">mercadito.pe</h5>
-      <ul class="nav flex-column">
+      <h5 class="text-center mb-4">
+        <a href="{{ url_for('index') }}" style="text-decoration: none; color: white;">mercadito.pe</a>
+      </h5> 
+          <ul class="nav flex-column">
         <li class="nav-item mb-2">
           <a class="nav-link text-white" href="{{ url_for('dashboard') }}">
             <i class="fas fa-tachometer-alt"></i> Dashboard

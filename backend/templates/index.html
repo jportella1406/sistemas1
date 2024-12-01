@@ -26,6 +26,9 @@
                 <nav>
                     <ul id="MenuItems">
                         <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
+                        {% if session.get('role') == 'admin' %}
+                            <li><a href="{{ url_for('dashboard_usuarios') }}">Dashboard</a></li>
+                        {% endif %}
                     </ul>
                 </nav>
                 {% if session.get('username') %}
