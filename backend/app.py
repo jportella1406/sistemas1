@@ -1,8 +1,11 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 from prometheus_flask_exporter import PrometheusMetrics
+##<<<<<<< HEAD
 from cryptography.fernet import Fernet
 import base64
+##=======
+##>>>>>>> main
 import os
 import bcrypt
 
