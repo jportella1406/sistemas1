@@ -1,11 +1,8 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 from prometheus_flask_exporter import PrometheusMetrics
-##<<<<<<< HEAD
 from cryptography.fernet import Fernet
 import base64
-##=======
-##>>>>>>> main
 import os
 import bcrypt
 import logging
@@ -14,19 +11,6 @@ from datetime import datetime
 from flask_talisman import Talisman
 
 
-# Configurar logging
-log_filename = f"logs/app_{datetime.today().strftime('%Y-%m-%d')}.log"
-
-# Configuramos un manejador para los logs con archivo rotativo, para que no crezca demasiado.
-handler = RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
-handler.setLevel(logging.INFO)  # Aquí puedes cambiar el nivel de log (INFO, ERROR, DEBUG)
-
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-
-# Añadir el manejador al logger
-app.logger.addHandler(handler)
-
 # Crear la aplicación Flask
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'mercadito.db')}"
@@ -34,6 +18,34 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
 metrics = PrometheusMetrics(app)
 db.init_app(app)
+
+# Configurar Flask-Talisman para seguridad
+talisman = Talisman(app, force_https=False)
+
+# Crear el directorio de logs si no existe
+log_dir = os.path.join(os.getcwd(), 'logs')
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Nombre de archivo para el log, con fecha
+log_filename = os.path.join(log_dir, f'app_{datetime.now().strftime("%Y-%m-%d")}.log')
+
+# Configurar el manejador de logs con rotación
+handler = RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
+handler.setLevel(logging.INFO)
+
+# Configurar el formato de los logs
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Asegurarse de que el handler se añada al logger de la aplicación después de la inicialización
+app.logger.addHandler(handler)
+
+# Configurar el nivel del logger a INFO
+app.logger.setLevel(logging.INFO)
+
+# Registrar un mensaje informativo al iniciar la app
+app.logger.info("Aplicación iniciada")
 
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
@@ -485,6 +497,11 @@ def api_login():
         app.logger.error(f"Error en inicio de sesión para usuario: {username}")
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
+# Ruta principal para probar
+@app.route('/')
+def hello_world():
+    app.logger.info("Página principal accedida.")
+    return '¡Hola Mundo!'
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)
