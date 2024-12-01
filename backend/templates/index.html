@@ -34,8 +34,10 @@
                 {% if session.get('username') %}
                     <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
                     <div style="display: inline-block; margin-left: 20px; margin-right: 20px; font-size: 14px; color: green; font-weight: bold;">
-                        Bienvenido {{ session['username'] }}
-                    </div>
+                        <a href="#" onclick="openEditAddressModal()" style="display: inline-block; margin-left: 20px; margin-right: 20px; font-size: 14px; color: green; font-weight: bold;">
+                            Bienvenido {{ session['username'] }}
+                        </a>                        
+                    </div>                    
                     <!-- Mostrar el enlace de cerrar sesión -->
                     <a href="{{ url_for('logout') }}" style="margin-left: 10px; margin-right: 20px; font-size: 14px; color: red;">Cerrar sesión</a>
                 {% endif %}
@@ -49,11 +51,39 @@
                 </a>
                 <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
             </div>
-            
-            
-            
-            
-            
+
+            <!-- Modal for Editing Address -->
+            <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <form id="editAddressForm">
+                                <div class="mb-3">
+                                    <label for="modalName" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="modalName" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modalUsername" class="form-label">Nombre de Usuario</label>
+                                    <input type="text" class="form-control" id="modalUsername" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modalEmail" class="form-label">Correo</label>
+                                    <input type="email" class="form-control" id="modalEmail" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="modalAddress" class="form-label">Dirección</label>
+                                    <input type="text" class="form-control" id="modalAddress" required>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" onclick="saveAddress()">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        
             <div class="row">
                 <div class="col-2">
                     <h1>Una nueva forma de comprar!</h1>
@@ -272,6 +302,68 @@ function addToCart(event, productId, productPrice) {
 
 </script>
 
+<script>
+function openEditAddressModal() {
+    // Realizar una solicitud al backend para obtener los datos del usuario logueado
+    fetch('/api/usuarios/{{ session.get("user_id") }}', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Rellenar los campos del modal con los datos del usuario
+            document.getElementById('modalName').value = data.usuario.nombre;
+            document.getElementById('modalUsername').value = data.usuario.username;
+            document.getElementById('modalEmail').value = data.usuario.email;
+            document.getElementById('modalAddress').value = data.usuario.direccion || '';
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+            modal.show();
+        } else {
+            alert('No se pudieron obtener los datos del usuario.');
+        }
+    })
+    .catch(error => {
+        console.error('Error al obtener los datos del usuario:', error);
+        alert('Ocurrió un error al cargar los datos.');
+    });
+}
+
+function saveAddress() {
+    const userId = "{{ session.get('user_id') }}"; // ID del usuario logueado
+    const direccion = document.getElementById('modalAddress').value;
+
+    // Validar dirección
+    if (!direccion.trim()) {
+        alert('La dirección no puede estar vacía.');
+        return;
+    }
+
+    // Actualizar la dirección en el backend
+    fetch(`/api/usuarios/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direccion })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Usuario actualizado con éxito') {
+            alert(data.message);
+            location.reload(); // Recargar para reflejar los cambios
+        } else {
+            alert('No se pudo actualizar la dirección.');
+        }
+    })
+    .catch(error => {
+        console.error('Error al actualizar la dirección:', error);
+        alert('Ocurrió un error al guardar los cambios.');
+    });
+}
+</script>
 
 
 

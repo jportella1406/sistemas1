@@ -137,12 +137,21 @@ def update_user(user_id):
     if not usuario:
         return jsonify({'message': 'Usuario no encontrado'}), 404
 
-    usuario.nombre = data.get('nombre', usuario.nombre)
-    usuario.email = data.get('email', usuario.email)
-    usuario.rol = data.get('rol', usuario.rol)
-    usuario.direccion = data.get('direccion', usuario.direccion)
+    # Update fields only if provided
+    if 'nombre' in data:
+        usuario.nombre = data['nombre']
+    if 'email' in data:
+        usuario.email = data['email']
+    if 'rol' in data:
+        usuario.rol = data['rol']
+    if 'direccion' in data:
+        usuario.direccion = data['direccion']  # Update only the address if provided
+
+    # Save changes to the database
     db.session.commit()
+
     return jsonify({'message': 'Usuario actualizado con éxito'}), 200
+
 
 # Eliminar un usuario
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
@@ -308,6 +317,24 @@ def logout():
     # Limpia la sesión del usuario
     session.clear()
     return redirect(url_for('index'))
+
+
+@app.route('/api/usuarios/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    usuario = Usuarios.query.get(user_id)
+
+    if not usuario:
+        return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+
+    return jsonify({
+        'success': True,
+        'usuario': {
+            'nombre': usuario.nombre,
+            'username': usuario.username,
+            'email': usuario.email,
+            'direccion': usuario.direccion
+        }
+    }), 200
 
 
 
