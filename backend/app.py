@@ -8,6 +8,30 @@ import base64
 ##>>>>>>> main
 import os
 import bcrypt
+import logging
+from logging.handlers import RotatingFileHandler
+from datetime import datetime
+from flask_talisman import Talisman
+
+# Inicializar Flask-Talisman
+talisman = Talisman(app)
+
+# Por ejemplo, puedes configurar HTTPS de manera predeterminada (en producción)
+app.config['TALISMAN_FORCE_HTTPS'] = True  # Activar en producción
+
+
+# Configurar logging
+log_filename = f"logs/app_{datetime.today().strftime('%Y-%m-%d')}.log"
+
+# Configuramos un manejador para los logs con archivo rotativo, para que no crezca demasiado.
+handler = RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
+handler.setLevel(logging.INFO)  # Aquí puedes cambiar el nivel de log (INFO, ERROR, DEBUG)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Añadir el manejador al logger
+app.logger.addHandler(handler)
 
 # Crear la aplicación Flask
 app = Flask(__name__)
@@ -441,6 +465,31 @@ def check_login():
     else:
         return jsonify({'logged_in': False}), 200
 
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Log de actividad (cuando alguien intente iniciar sesión)
+    app.logger.info(f"Intento de inicio de sesión con usuario: {username}")
+    
+    # Verificar si el usuario existe
+    user = Usuarios.query.filter_by(username=username).first()
+
+    if user and user.password == password:
+        # Éxito, logueamos la acción
+        app.logger.info(f"Inicio de sesión exitoso para usuario: {username}")
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+    else:
+        # Error, logueamos el intento fallido
+        app.logger.error(f"Error en inicio de sesión para usuario: {username}")
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
