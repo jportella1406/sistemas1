@@ -6,16 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Ruta al CSS usando Flask -->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style-login.css') }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.1/css/all.css" integrity="sha384-vp86vTRFVJgpjF9jiIGPEEqYqlDwgyBgEF109VFjmqGmIY/Y4HV4d3Gp2irVfcrp" crossorigin="anonymous">
-  <!-- Enlace a Bootstrap CSS -->
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <!-- Estilos adicionales -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style-main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body class="body">
@@ -25,16 +18,33 @@
         <div class="navbar">
           <div class="logo">
               <!-- Ruta al logo -->
-              <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px"></a>
+              <a href="{{ url_for('index') }}">
+                  <img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px">
+              </a>
           </div>
           <nav>
               <ul id="MenuItems">
                   <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
               </ul>
           </nav>
-          <a href="{{ url_for('view_cart') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
+          {% if session.get('username') %}
+              <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
+              <div style="display: inline-block; margin-left: 20px; margin-right: 20px; font-size: 14px; color: green; font-weight: bold;">
+                  Bienvenido {{ session['username'] }}
+              </div>
+              <!-- Mostrar el enlace de cerrar sesión -->
+              <a href="{{ url_for('logout') }}" style="margin-left: 10px; margin-right: 20px; font-size: 14px; color: red;">Cerrar sesión</a>
+          {% endif %}
+          <a href="{{ url_for('view_cart') }}" style="position: relative;">
+              <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
+              <!-- Contador del carrito -->
+              <span id="cart-count" 
+                    style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">
+                  0
+              </span>
+          </a>
           <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
-        </div>
+      </div>
       </div>
     </div>
 
@@ -106,32 +116,68 @@
     </script>
 
     <script>
-      function registerUser() {
-        const form = document.querySelector('form');
-        const formData = new FormData(form);
+    function registerUser() {
+    const form = document.querySelector('form');
+    const nombre = form.querySelector('input[name="nombre"]').value;
+    const email = form.querySelector('input[name="email"]').value;
+    const username = form.querySelector('input[name="username"]').value;
+    const password = form.querySelector('input[name="password"]').value;
 
-        fetch('/api/register', {
-          method: 'POST',
-          body: formData,
-        })
-          .then(response => response.json())
-          .then(data => {
+    // Validar el formato del correo electrónico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        const message = document.getElementById('registerMessage');
+        message.style.color = 'red';
+        message.textContent = 'El correo electrónico debe tener el formato "nombreEmail@Email.com"';
+        return;
+    }
+
+    // Validar que el campo email termine con ".com"
+    if (!email.endsWith('.com')) {
+        const message = document.getElementById('registerMessage');
+        message.style.color = 'red';
+        message.textContent = 'El correo electrónico debe terminar con ".com"';
+        return;
+    }
+
+    // Validar que los campos obligatorios no estén vacíos
+    if (!nombre || !username || !email || !password) {
+        const message = document.getElementById('registerMessage');
+        message.style.color = 'red';
+        message.textContent = 'Por favor, completa todos los campos obligatorios.';
+        return;
+    }
+
+    // Enviar los datos al backend si todo es válido
+    fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, email, password }),
+    })
+        .then(response => response.json())
+        .then(data => {
             const message = document.getElementById('registerMessage');
             if (data.message === 'Usuario registrado exitosamente') {
-              message.style.color = 'green';
-              message.textContent = data.message;
+                message.style.color = 'green';
+                message.textContent = data.message;
+
+                // Redirigir al formulario de inicio de sesión después de un pequeño retraso
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
             } else {
-              message.style.color = 'red';
-              message.textContent = data.message;
+                message.style.color = 'red';
+                message.textContent = data.message;
             }
-          })
-          .catch(error => {
+        })
+        .catch(error => {
             console.error('Error:', error);
             const message = document.getElementById('registerMessage');
             message.style.color = 'red';
-            message.textContent = 'Error al conectar con el servidor';
-          });
-      }
+            message.textContent = 'Error al conectar con el servidor.';
+        });
+    }
+
     </script>
 
 </body>
