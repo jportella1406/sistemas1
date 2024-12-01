@@ -141,6 +141,17 @@
         </div>
     </div>
 
+<!-- Modal personalizado -->
+<div id="customModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal()">&times;</span>
+      <h2>Acción requerida</h2>
+      <p>Por favor, inicia sesión para poder realizar compras. <br> Si aún no tienes una cuenta, ¡regístrate gratis!</p>
+      <button onclick="redirectToLogin()">Iniciar sesión</button>
+    </div>
+  </div>
+  
+
     <!-- JavaScript -->
     <script>
         var MenuItems = document.getElementById("MenuItems");
@@ -161,12 +172,22 @@
     <!--Controlador del Carrito de compras de index-->
 <script>
     // Controlador del botón Add to Cart
-function addToCart(event, productId, productPrice) {
-    event.preventDefault(); // Evita que se recargue la página
+    function addToCart(event, productId, productPrice) {
+    event.preventDefault(); // Evita recargar la página
+
+    // Comprobar si el usuario está logeado
+    const isLoggedIn = {{ 'true' if session.get('username') else 'false' }};
+
+    if (!isLoggedIn) {
+        // Mostrar el modal si el usuario no está logeado
+        showModal();
+        return;
+    }
+
+    // Si el usuario está logeado, procede con la lógica de agregar al carrito
     const form = document.getElementById(`add-to-cart-form-${productId}`);
     const quantity = form.querySelector('input[name="quantity"]').value;
 
-    // Realizar la solicitud AJAX al backend
     fetch('/add_to_cart', {
         method: 'POST',
         headers: {
@@ -180,10 +201,9 @@ function addToCart(event, productId, productPrice) {
     .then(response => response.json())
     .then(data => {
         if (data.message === 'Producto agregado al carrito') {
-            // Actualizar el contador del carrito
             const cartCount = document.getElementById('cart-count');
             cartCount.textContent = data.total_items;
-            cartCount.style.display = 'inline-block'; // Asegurarse de que sea visible
+            cartCount.style.display = 'inline-block';
         } else {
             alert('Hubo un error al agregar el producto.');
         }
@@ -192,6 +212,8 @@ function addToCart(event, productId, productPrice) {
         console.error('Error:', error);
     });
 }
+
+
 
 
     // Función para aumentar la cantidad
@@ -219,7 +241,34 @@ function addToCart(event, productId, productPrice) {
             addToCartButton.classList.remove('d-none');
         }
     }
+
+    //Funciones para los modal
+
+        function showModal() {
+    const modal = document.getElementById("customModal");
+    modal.style.display = "block";
+    }
+
+    function closeModal() {
+    const modal = document.getElementById("customModal");
+    modal.style.display = "none";
+    }
+
+    function redirectToLogin() {
+    window.location.href = "/login";
+    }
+
+    // Cerrar el modal al hacer clic fuera de él
+    window.onclick = function (event) {
+    const modal = document.getElementById("customModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+    };
+
+
 </script>
+
 
 
 

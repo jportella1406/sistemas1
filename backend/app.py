@@ -153,37 +153,24 @@ def delete_user(user_id):
         return redirect(url_for('dashboard_usuarios'))  # Esto está correcto
     return "Usuario no encontrado", 404
 
-# Agregar un producto al carrito
-@routes.route('/api/carrito', methods=['POST'])
-def add_to_cart():
-    data = request.get_json()
-    product_id = data.get('product_id')
-    quantity = data.get('quantity')
 
-    if not product_id or not quantity:
-        return jsonify({'message': 'Faltan datos'}), 400
-
-    # Aquí puedes guardar el producto en una tabla de carrito (en sesión o base de datos)
-    carrito_item = Carrito(product_id=product_id, quantity=quantity)
-    db.session.add(carrito_item)
-    db.session.commit()
-
-    return jsonify({'message': 'Producto agregado al carrito'}), 201
-
-# Ruta para agregar un producto al carrito
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
+    # Verificar si el usuario está autenticado
+    if not session.get('user_id'):
+        return jsonify({'success': False, 'message': 'Por favor, inicia sesión para poder realizar compras. Si aún no tienes una cuenta, ¡Regístrate gratis!'}), 401
+
     product_id = int(request.form.get('product_id'))
     quantity = int(request.form.get('quantity', 1))
-    
+
     # Buscar el producto por ID
     product = Producto.query.get(product_id)
     if not product:
-        return jsonify({'message': 'Producto no encontrado'}), 404
-    
+        return jsonify({'success': False, 'message': 'Producto no encontrado'}), 404
+
     # Obtener el carrito actual de la sesión
     cart = session.get('cart', [])
-    
+
     # Verificar si el producto ya está en el carrito
     for item in cart:
         if item['id'] == product.id:
@@ -197,15 +184,16 @@ def add_to_cart():
             'price': product.precio,
             'quantity': quantity
         })
-    
+
     # Guardar el carrito actualizado en la sesión
     session['cart'] = cart
     session.modified = True
-    
+
     # Calcular el total de artículos en el carrito
     total_items = sum(item['quantity'] for item in cart)
-    
-    return jsonify({'message': 'Producto agregado al carrito', 'total_items': total_items}), 200
+
+    return jsonify({'success': True, 'message': 'Producto agregado al carrito', 'total_items': total_items}), 200
+
 
 
 # Ruta para eliminar un producto del carrito
