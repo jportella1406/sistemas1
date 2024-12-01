@@ -13,12 +13,6 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from flask_talisman import Talisman
 
-# Inicializar Flask-Talisman
-talisman = Talisman(app)
-
-# Por ejemplo, puedes configurar HTTPS de manera predeterminada (en producción)
-app.config['TALISMAN_FORCE_HTTPS'] = True  # Activar en producción
-
 
 # Configurar logging
 log_filename = f"logs/app_{datetime.today().strftime('%Y-%m-%d')}.log"
