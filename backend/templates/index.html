@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    
 </head>
 
 <body>
@@ -18,19 +19,38 @@
             <div class="navbar">
                 <div class="logo">
                     <!-- Ruta al logo -->
-                    <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px"></a>
+                    <a href="{{ url_for('index') }}">
+                        <img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px">
+                    </a>
                 </div>
                 <nav>
                     <ul id="MenuItems">
-                        <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                        <li><a href="#productos">Productos</a></li>
-                        <li><a href="#ofertas">Oferta</a></li>
                         <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
                     </ul>
                 </nav>
-                <a href="{{ url_for('carrito') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
+                {% if session.get('username') %}
+                    <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
+                    <div style="display: inline-block; margin-left: 20px; font-size: 14px; color: green; font-weight: bold;">
+                        Bienvenido {{ session['username'] }}
+                    </div>
+                    <!-- Mostrar el enlace de cerrar sesión -->
+                    <a href="{{ url_for('logout') }}" style="margin-left: 10px; font-size: 14px; color: red;">Cerrar sesión</a>
+                {% endif %}
+                <a href="{{ url_for('view_cart') }}" style="position: relative;">
+                    <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
+                    <!-- Contador del carrito -->
+                    <span id="cart-count" 
+                          style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">
+                        0
+                    </span>
+                </a>
                 <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
             </div>
+            
+            
+            
+            
+            
             <div class="row">
                 <div class="col-2">
                     <h1>Una nueva forma de comprar!</h1>
@@ -44,61 +64,35 @@
         </div>
     </div>
 
-    <!-- Featured Products -->
-    <div class="small-container" id="productos">
-        <h2 class="title">Productos disponibles para envío</h2>
-        <div class="row">
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/cervezas.jpg') }}"></a>
-                <h4>Cerveza Cusqueña</h4>
-                <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star-o"></i>
+<!-- Featured Products -->
+<div class="small-container" id="productos">
+    <h2 class="title">Productos disponibles para envío</h2>
+    <div class="row">
+        {% for product in productos %}
+        <div class="col-4">
+            <div class="product" id="product-{{ product.id }}">
+                <a href="#"><img src="{{ url_for('static', filename='img/' + product.imagen) }}" alt="{{ product.nombre }}"></a>
+                <h4>{{ product.nombre }}</h4>
+                <p>S/.{{ product.precio }}</p>
+                <!-- Formulario para agregar al carrito -->
+                <form id="add-to-cart-form-{{ product.id }}" onsubmit="addToCart(event, {{ product.id }}, {{ product.precio }})">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="number" name="quantity" min="1" value="1" style="width: 50px;">
+                    <button type="submit" class="btn btn-primary">Add to Cart</button>
+                </form>
+                
+                <!-- Controles de cantidad -->
+                <div class="quantity-controls d-none" id="quantity-controls-{{ product.id }}">
+                    <button class="btn btn-secondary" onclick="decreaseQuantity({{ product.id }})">-</button>
+                    <span id="quantity-{{ product.id }}">1</span>
+                    <button class="btn btn-secondary" onclick="increaseQuantity({{ product.id }})">+</button>
                 </div>
-                <p>S/.50.00</p>
-            </div>
-            <!-- Más productos con rutas Flask -->
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/arroz.jpg') }}"></a>
-                <h4>Arroz Costeño</h4>
-                <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star-o"></i>
-                </div>
-                <p>S/.50.00</p>
-            </div>
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/pampers.png') }}"></a>
-                <h4>Pañales Pampers</h4>
-                <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star-o"></i>
-                </div>
-                <p>S/.50.00</p>
-            </div>
-            <div class="col-4">
-                <a href="#"><img src="{{ url_for('static', filename='img/inca.png') }}"></a>
-                <h4>Inca Kola</h4>
-                <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star-o"></i>
-                </div>
-                <p>S/. 50.00</p>
             </div>
         </div>
+        {% endfor %}
     </div>
+</div>
+
 
     <!-- Ofertas -->
     <div class="offer" id="ofertas">
@@ -160,6 +154,74 @@
             }
         }
     </script>
+
+    <!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!--Controlador del Carrito de compras de index-->
+<script>
+    // Controlador del botón Add to Cart
+function addToCart(event, productId, productPrice) {
+    event.preventDefault(); // Evita que se recargue la página
+    const form = document.getElementById(`add-to-cart-form-${productId}`);
+    const quantity = form.querySelector('input[name="quantity"]').value;
+
+    // Realizar la solicitud AJAX al backend
+    fetch('/add_to_cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            product_id: productId,
+            quantity: quantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Producto agregado al carrito') {
+            // Actualizar el contador del carrito
+            const cartCount = document.getElementById('cart-count');
+            cartCount.textContent = data.total_items;
+            cartCount.style.display = 'inline-block'; // Asegurarse de que sea visible
+        } else {
+            alert('Hubo un error al agregar el producto.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+
+    // Función para aumentar la cantidad
+    function increaseQuantity(productId) {
+        const quantityElement = document.getElementById(`quantity-${productId}`);
+        let currentQuantity = parseInt(quantityElement.innerText, 10);
+        currentQuantity++;
+        quantityElement.innerText = currentQuantity;
+    }
+
+    // Función para disminuir la cantidad
+    function decreaseQuantity(productId) {
+        const quantityElement = document.getElementById(`quantity-${productId}`);
+        let currentQuantity = parseInt(quantityElement.innerText, 10);
+        
+        // Si la cantidad es mayor a 1, disminuirla
+        if (currentQuantity > 1) {
+            currentQuantity--;
+            quantityElement.innerText = currentQuantity;
+        } else {
+            // Si la cantidad llega a 0, volver al botón Add to Cart
+            const quantityControls = document.getElementById(`quantity-controls-${productId}`);
+            quantityControls.classList.add('d-none');
+            const addToCartButton = document.getElementById(`add-to-cart-${productId}`);
+            addToCartButton.classList.remove('d-none');
+        }
+    }
+</script>
+
+
 
 </body>
 </html>

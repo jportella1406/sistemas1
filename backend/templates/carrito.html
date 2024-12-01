@@ -4,105 +4,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Products | RedStore</title>
-    <!-- Rutas para CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style-cart.css') }}">
+    <title>mercadito.pe</title>
+    <!-- Ruta para el CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    
 </head>
 
 <body>
-    <div class="container">
-        <div class="navbar">
-            <div class="logo">
-                <!-- Ruta al logo -->
-                <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px"></a>
+    <!--Barra de navegacion-->
+    <div class="header">
+        <div class="container">
+            <div class="navbar">
+                <div class="logo">
+                    <!-- Ruta al logo -->
+                    <a href="{{ url_for('index') }}">
+                        <img src="{{ url_for('static', filename='img/logo_corto.png') }}" alt="logo" width="125px">
+                    </a>
+                </div>
+                <nav>
+                    <ul id="MenuItems">
+                        <li><a href="{{ url_for('login_page') }}">Cuenta</a></li>
+                    </ul>
+                </nav>
+                {% if session.get('username') %}
+                    <!-- Mostrar mensaje de bienvenida si el usuario está logeado -->
+                    <div style="display: inline-block; margin-left: 20px; font-size: 14px; color: green; font-weight: bold;">
+                        Bienvenido {{ session['username'] }}
+                    </div>
+                    <!-- Mostrar el enlace de cerrar sesión -->
+                    <a href="{{ url_for('logout') }}" style="margin-left: 10px; font-size: 14px; color: red;">Cerrar sesión</a>
+                {% endif %}
+                <a href="{{ url_for('view_cart') }}" style="position: relative;">
+                    <img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px">
+                    <!-- Contador del carrito -->
+                    <span id="cart-count" 
+                          style="position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; display: none;">
+                        0
+                    </span>
+                </a>
+                <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
             </div>
-            <nav>
-                <ul id="MenuItems">
-                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                    <li><a href="#productos">Productos</a></li>
-                    <li><a href="#ofertas">Oferta</a></li>
-                    <li><a href="{{ url_for('login') }}">Cuenta</a></li>
-                </ul>
-            </nav>
-            <a href="{{ url_for('carrito') }}"><img src="{{ url_for('static', filename='img/cart.png') }}" width="30px" height="30px"></a>
-            <img src="{{ url_for('static', filename='img/menu.png') }}" class="menu-icon" onclick="menutoggle()">
         </div>
     </div>
 
-    <!-- Cart items details -->
-    <div class="small-container cart-page">
-        <table>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Subtotal</th>
-            </tr>
-            <tr>
-                <td>
-                    <div class="cart-info">
-                        <img src="{{ url_for('static', filename='img/ace.png') }}">
-                        <div>
-                            <p>Detergente ACE</p>
-                            <small>Precio: S/. 50.00</small>
-                            <br>
-                            <a href="">Remover</a>
-                        </div>
-                    </div>
-                </td>
-                <td><input type="number" value="1"></td>
-                <td>S/.50.00</td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="cart-info">
-                        <img src="{{ url_for('static', filename='img/azucar.png') }}">
-                        <div>
-                            <p>Azúcar Paramonga</p>
-                            <small>Precio: S/.50.00</small>
-                            <br>
-                            <a href="">Remover</a>
-                        </div>
-                    </div>
-                </td>
-                <td><input type="number" value="1"></td>
-                <td>S/.50.00</td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="cart-info">
-                        <img src="{{ url_for('static', filename='img/agua.jpeg') }}">
-                        <div>
-                            <p>Agua San Luis</p>
-                            <small>Precio: S/.50.00</small>
-                            <br>
-                            <a href="">Remover</a>
-                        </div>
-                    </div>
-                </td>
-                <td><input type="number" value="1"></td>
-                <td>S/.50.00</td>
-            </tr>
+    <!--Calculo del carrito de compras-->
+    <div class="container" style="margin: 20vh;">
+        <h2>Carrito de Compras</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart %}
+                <tr data-id="{{ item['id'] }}">
+                    <td>{{ item['name'] }}</td>
+                    <td>S/.{{ "%.2f"|format(item['price']) }}</td>
+                    <td>
+                        <input 
+                            type="number" 
+                            value="{{ item['quantity'] }}" 
+                            class="quantity-input" 
+                            min="1" 
+                            onchange="updateQuantity(this, {{ item['id'] }})"
+                        />
+                        <button class="btn-delete" onclick="deleteProduct({{ item['id'] }})">
+                            ✖
+                        </button>
+                    </td>
+                    <td class="subtotal">S/.{{ "%.2f"|format(item['price'] * item['quantity']) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-        <div class="total-price">
-            <table>
-                <tr>
-                    <td>Subtotal</td>
-                    <td>S/.150.00</td>
-                </tr>
-                <tr>
-                    <td>Impuestos</td>
-                    <td>S/.27.00</td>
-                </tr>
-                <tr>
-                    <td>Total</td>
-                    <td>S/.177.00</td>
-                </tr>
-            </table>
-        </div>
+        
+        <!-- Mostrar cálculos adicionales -->
+        <p class="text-end"><strong>Subtotal:</strong> S/.<span id="subtotal">{{ "%.2f"|format(subtotal) }}</span></p>
+        <p class="text-end"><strong>IGV (18%):</strong> S/.<span id="igv">{{ "%.2f"|format(igv) }}</span></p>
+        <p class="text-end"><strong>Total:</strong> S/.<span id="total">{{ "%.2f"|format(total) }}</span></p>
     </div>
+    
 
     <!-- Pie de página -->
     <div class="footer">
@@ -134,7 +122,14 @@
         </div>
     </div>
 
+
+
+
+
+
     <!-- JavaScript -->
+
+
     <script>
         var MenuItems = document.getElementById("MenuItems");
         MenuItems.style.maxHeight = "0px";
@@ -147,6 +142,102 @@
             }
         }
     </script>
+
+<script>
+    function updateQuantity(inputElement, productId) {
+        // Obtén la nueva cantidad ingresada
+        const newQuantity = parseInt(inputElement.value);
+
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            alert("Por favor, ingresa una cantidad válida.");
+            inputElement.value = 1; // Restaura un valor válido
+            return;
+        }
+
+        // Encuentra la fila del producto
+        const row = inputElement.closest("tr");
+        const price = parseFloat(row.children[1].textContent.replace("S/.", ""));
+        const subtotalCell = row.querySelector(".subtotal");
+
+        // Actualiza el subtotal en la interfaz
+        subtotalCell.textContent = `S/.${(price * newQuantity).toFixed(2)}`;
+
+        // Realiza la petición al servidor para actualizar el carrito
+        fetch(`/update-cart`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": "{{ csrf_token }}" // Si usas CSRF tokens en Flask
+    },
+    body: JSON.stringify({
+        productId: productId, // Asegúrate de que este ID sea válido
+        newQuantity: newQuantity // Asegúrate de que la cantidad sea un número válido
+    })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("HTTP error " + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+        // Actualizar los valores de subtotal, IGV y total en la página
+        document.getElementById('subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+        document.getElementById('igv').textContent = `S/. ${data.igv.toFixed(2)}`;
+        document.getElementById('total').textContent = `S/. ${data.total.toFixed(2)}`;
+        }
+    else {
+            alert("Hubo un problema al actualizar el carrito.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("No se pudo actualizar el carrito.");
+    });
+}
+</script>
+
+<script>
+    function deleteProduct(productId) {
+        if (confirm("¿Estás seguro de que deseas eliminar este producto del carrito?")) {
+            fetch('/remove_from_cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // Si usas CSRF tokens
+                },
+                body: JSON.stringify({ productId: productId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("HTTP error " + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Eliminar la fila del producto de la tabla
+                    const row = document.querySelector(`tr[data-id='${productId}']`);
+                    if (row) {
+                        row.remove();
+                    }
+                    // Actualizar los totales
+                    document.getElementById('subtotal').textContent = `S/. ${data.subtotal.toFixed(2)}`;
+                    document.getElementById('igv').textContent = `S/. ${data.igv.toFixed(2)}`;
+                    document.getElementById('total').textContent = `S/. ${data.total.toFixed(2)}`;
+                } else {
+                    alert("No se pudo eliminar el producto del carrito.");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Ocurrió un error al eliminar el producto.");
+            });
+        }
+    }
+</script>
+
 
 </body>
 
