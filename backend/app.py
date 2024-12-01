@@ -9,6 +9,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from flask_talisman import Talisman
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
 # Crear la aplicación Flask
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'mercadito.db')}"
@@ -45,6 +50,7 @@ app.logger.setLevel(logging.INFO)
 # Registrar un mensaje informativo al iniciar la app
 app.logger.info("Aplicación iniciada")
 
+<<<<<<< HEAD
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
 
@@ -52,8 +58,14 @@ routes = Blueprint('routes', __name__)
 SECRET_KEY = os.getenv('SECRET_KEY') or Fernet.generate_key()
 cipher_suite = Fernet(SECRET_KEY)
 
+=======
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
+
+# Generar una clave secreta (haz esto una vez y guárdala en un lugar seguro)
+SECRET_KEY = os.getenv('SECRET_KEY') or Fernet.generate_key()
+cipher_suite = Fernet(SECRET_KEY)
 
 ############################################################################
 ######################## --- RUTAS API --- #################################
@@ -100,6 +112,7 @@ def api_register():
 
         if not all([nombre, username, email, password]):
             return jsonify({'message': 'Faltan campos obligatorios'}), 400
+<<<<<<< HEAD
 
         existing_user = Usuarios.query.filter_by(username=username).first()
         if existing_user:
@@ -122,6 +135,32 @@ def api_register():
         return jsonify({'message': 'Usuario registrado exitosamente'}), 201
     except Exception as e:
         return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+=======
+
+        existing_user = Usuarios.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
+
+        # Hashear la contraseña antes de guardarla
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Crear un nuevo usuario
+        new_user = Usuarios(
+            nombre=nombre,
+            username=username,
+            email=email,
+            password=hashed_password.decode('utf-8'),  # Almacenar como string
+            rol=rol
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+    except Exception as e:
+        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+
+
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
 
 
 # Obtener todos los productos
@@ -212,6 +251,32 @@ def generate_product_url(product_id):
     secure_url = f"http://127.0.0.1:5000/product/{encrypted_id}"
     return jsonify({'secure_url': secure_url})
 
+<<<<<<< HEAD
+=======
+# Ruta para ver el detalle del producto a través de una URL cifrada
+@app.route('/product/<encrypted_id>')
+def product_detail(encrypted_id):
+    # Descifrar el ID aleatorio
+    decrypted_data = decrypt_data(encrypted_id)
+    if not decrypted_data:
+        return jsonify({'message': 'Invalid or tampered URL'}), 400
+
+    # Extraer el ID del producto desde el dato descifrado
+    product_id = decrypted_data.split('-')[0]
+    
+    # Buscar el producto en la base de datos (esto es un ejemplo, ajusta a tu modelo)
+    productos = {
+        "1": {"id": 1, "name": "Cerveza Cusqueña", "price": 6.0, "description": "Botella de cerveza 350ml"},
+        "2": {"id": 2, "name": "Arroz Costeño", "price": 8.0, "description": "Bolsa de arroz de 5kg"},
+    }
+
+    product = productos.get(product_id)
+    if not product:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+
+    return jsonify(product)
+
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
 # Actualizar un usuario
 @app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
@@ -468,6 +533,42 @@ def view_cart():
 
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 
+<<<<<<< HEAD
+=======
+@routes.route('/api/check-login', methods=['GET'])
+def check_login():
+    if 'user_id' in session:
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 200
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Log de actividad (cuando alguien intente iniciar sesión)
+    app.logger.info(f"Intento de inicio de sesión con usuario: {username}")
+    
+    # Verificar si el usuario existe
+    user = Usuarios.query.filter_by(username=username).first()
+
+    if user and user.password == password:
+        # Éxito, logueamos la acción
+        app.logger.info(f"Inicio de sesión exitoso para usuario: {username}")
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+    else:
+        # Error, logueamos el intento fallido
+        app.logger.error(f"Error en inicio de sesión para usuario: {username}")
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
 # Ruta principal para probar
 @app.route('/')
 def hello_world():
@@ -487,4 +588,8 @@ def status():
 
 if __name__ == "__main__":
     # Corre la aplicación en localhost:5000
+<<<<<<< HEAD
     app.run(host="0.0.0.0", port=5000)
+=======
+    app.run(host="0.0.0.0", port=5000)
+>>>>>>> 48d02911399b55c8efc68beda72189bb0f478aa2
