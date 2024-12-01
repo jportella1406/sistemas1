@@ -32,7 +32,7 @@
           </a>
         </li>
         <li class="nav-item mb-2">
-          <a class="nav-link text-white" href="{{ url_for('pedido') }}">
+          <a class="nav-link text-white" href="{{ url_for('gestion_pedidos') }}">
             <i class="fas fa-chart-line"></i> Pedidos
           </a>
         </li>
@@ -40,12 +40,14 @@
     </div>
 
     <!-- Contenido principal -->
-    <div class="container-fluid p-4">
+    <body>
+      <div class="container-fluid p-4">
         <h2>Gestión de Pedidos</h2>
-        
-        {% if message %}
-        <div class="alert alert-info">{{ message }}</div>
+    
+        {% if pedidos|length == 0 %}
+        <div class="alert alert-info">No hay pedidos disponibles.</div>
         {% else %}
+        <!-- Muestra la tabla con los pedidos -->
         <table class="table table-bordered table-hover mt-4">
           <thead class="table-light">
             <tr>
@@ -78,8 +80,9 @@
           </tbody>
         </table>
         {% endif %}
+        
       </div>
-      
+    
       <script>
         async function updatePedido(pedidoId, nuevoEstado) {
           try {
@@ -90,7 +93,7 @@
               },
               body: JSON.stringify({ estado: nuevoEstado }),
             });
-      
+    
             if (response.ok) {
               alert('Estado del pedido actualizado con éxito');
               location.reload(); // Recarga la página para reflejar los cambios
@@ -104,6 +107,5 @@
           }
         }
       </script>
-      
-</body>
+    </body>
 </html>

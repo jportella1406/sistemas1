@@ -387,6 +387,31 @@ def procesar_pago():
         return jsonify({'success': False, 'message': f'Error al procesar el pedido: {str(e)}'}), 500
 
 
+@app.route('/pedido', methods=['GET'])
+def gestion_pedidos():
+    pedidos = Pedido.query.all()  # Consulta todos los pedidos en la base de datos
+
+    # Verifica si se encontraron pedidos
+    if not pedidos:
+        return render_template('dash-pedido.html', message="No hay pedidos disponibles.")
+
+    # Serializa los pedidos para pasarlos al template
+    pedidos_data = [{
+        'pedidoId': pedido.pedidoId,
+        'fecha': pedido.fecha,
+        'usuario': Usuarios.query.get(pedido.user_id).username,  # Obtener el nombre del usuario
+        'direccion': pedido.direccion,
+        'producto': pedido.producto,
+        'precio': pedido.precio,
+        'estado': pedido.estado
+    } for pedido in pedidos]
+
+    # Renderiza la plantilla con los datos de pedidos
+    return render_template('dash-pedido.html', pedidos=pedidos_data)
+
+
+
+
 
 ############################################################################
 ####################### --- RUTAS HTML --- #################################
@@ -460,10 +485,6 @@ def payment_page():
 
     return render_template('pago.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 
-
-@app.route('/pedido')
-def pedido():
-    return render_template('dash-pedido.html')
 
 @app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
 def actualizar_estado_pedido(pedido_id):
