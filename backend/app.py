@@ -1,8 +1,14 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
+from prometheus_flask_exporter import PrometheusMetrics
+from cryptography.fernet import Fernet
+import base64
 import os
+import bcrypt
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError
+from flask_talisman import Talisman
 
 
 # Crear la aplicación Flask
@@ -10,10 +16,43 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'mercadito.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
+metrics = PrometheusMetrics(app)
 db.init_app(app)
+
+# Configurar Flask-Talisman para seguridad
+talisman = Talisman(app, force_https=False)
+
+# Crear el directorio de logs si no existe
+log_dir = os.path.join(os.getcwd(), 'logs')
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Nombre de archivo para el log, con fecha
+log_filename = os.path.join(log_dir, f'app_{datetime.now().strftime("%Y-%m-%d")}.log')
+
+# Configurar el manejador de logs con rotación
+handler = RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
+handler.setLevel(logging.INFO)
+
+# Configurar el formato de los logs
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Asegurarse de que el handler se añada al logger de la aplicación después de la inicialización
+app.logger.addHandler(handler)
+
+# Configurar el nivel del logger a INFO
+app.logger.setLevel(logging.INFO)
+
+# Registrar un mensaje informativo al iniciar la app
+app.logger.info("Aplicación iniciada")
 
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
+
+# Generar una clave secreta (haz esto una vez y guárdala en un lugar seguro)
+SECRET_KEY = os.getenv('SECRET_KEY') or Fernet.generate_key()
+cipher_suite = Fernet(SECRET_KEY)
 
 ############################################################################
 ######################## --- RUTAS API --- #################################
@@ -21,61 +60,71 @@ routes = Blueprint('routes', __name__)
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
 
-    # Verificar si el usuario existe
-    user = Usuarios.query.filter_by(username=username).first()
+        user = Usuarios.query.filter_by(username=username).first()
 
-    if user and user.password == password:
-        session['user_id'] = user.user_id
-        session['username'] = user.username
-        session['role'] = user.rol  # Guardar el rol en la sesión
-        return jsonify({
-            'message': 'Inicio de sesión exitoso',
-            'user_id': user.user_id,
-            'username': user.username,
-            'role': user.rol
-        }), 200
-    else:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            return jsonify({
+                'message': 'Inicio de sesión exitoso',
+                'user_id': user.user_id,
+                'username': user.username,
+                'role': user.rol
+            }), 200
+        else:
+            return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+    except Exception as e:
+        # Captura el error y devuelve un mensaje útil
+        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+
 
 
 
 @routes.route('/api/register', methods=['POST'])
 def api_register():
-    data = request.json
-    nombre = data.get('nombre')
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
-    rol = data.get('rol', 'usuario')  # Rol por defecto
-    direccion = data.get('direccion')  # Handle the new field
+    try:
+        # Intentar obtener datos como JSON primero
+        if request.is_json:
+            data = request.json
+        else:
+            # Si no es JSON, obtenerlos desde form-urlencoded
+            data = request.form.to_dict()
 
-    if not all([nombre, username, email, password, direccion]):
-        return jsonify({'message': 'Faltan campos obligatorios'}), 400
+        nombre = data.get('nombre')
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        rol = data.get('rol', 'usuario')  # Rol por defecto
 
-    existing_user = Usuarios.query.filter_by(username=username).first()
-    if existing_user:
-        return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
-    
-    existing_email = Usuarios.query.filter_by(email=email).first()
-    if existing_email:
-        return jsonify({'message': 'La direccion de correo ya está en uso'}), 400
+        if not all([nombre, username, email, password]):
+            return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
-    new_user = Usuarios(
-        nombre=nombre,
-        username=username,
-        email=email,
-        password=password,
-        rol=rol,
-        direccion=direccion
-    )
-    db.session.add(new_user)
-    db.session.commit()
+        existing_user = Usuarios.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
 
-    return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+        # Hashear la contraseña antes de guardarla
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Crear un nuevo usuario
+        new_user = Usuarios(
+            nombre=nombre,
+            username=username,
+            email=email,
+            password=hashed_password.decode('utf-8'),  # Almacenar como string
+            rol=rol
+        )
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+    except Exception as e:
+        return jsonify({'message': 'Error interno en el servidor', 'error': str(e)}), 500
+
+
 
 
 # Obtener todos los productos
@@ -135,6 +184,59 @@ def delete_producto(producto_id):
     db.session.delete(producto)
     db.session.commit()
     return jsonify({'message': 'Producto eliminado exitosamente'}), 200
+
+# Función para cifrar datos
+def encrypt_data(data: str) -> str:
+    """Cifra un texto en formato base64."""
+    encrypted_data = cipher_suite.encrypt(data.encode())
+    return base64.urlsafe_b64encode(encrypted_data).decode()
+
+# Función para descifrar datos
+def decrypt_data(encrypted_data: str) -> str:
+    """Descifra un texto cifrado en formato base64."""
+    try:
+        decoded_data = base64.urlsafe_b64decode(encrypted_data.encode())
+        return cipher_suite.decrypt(decoded_data).decode()
+    except Exception:
+        return None
+
+# Función para generar un ID único y aleatorio relacionado al producto
+def generate_random_id(product_id: int) -> str:
+    """Genera un ID aleatorio único basado en el ID del producto."""
+    random_suffix = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+    return f"{product_id}-{random_suffix}"
+
+# Ruta para generar un enlace seguro a un producto
+@app.route('/generate_product_url/<int:product_id>')
+def generate_product_url(product_id):
+    # Generar un ID aleatorio relacionado al producto
+    random_id = generate_random_id(product_id)
+    encrypted_id = encrypt_data(random_id)  # Cifrar el ID aleatorio
+    secure_url = f"http://127.0.0.1:5000/product/{encrypted_id}"
+    return jsonify({'secure_url': secure_url})
+
+# Ruta para ver el detalle del producto a través de una URL cifrada
+@app.route('/product/<encrypted_id>')
+def product_detail(encrypted_id):
+    # Descifrar el ID aleatorio
+    decrypted_data = decrypt_data(encrypted_id)
+    if not decrypted_data:
+        return jsonify({'message': 'Invalid or tampered URL'}), 400
+
+    # Extraer el ID del producto desde el dato descifrado
+    product_id = decrypted_data.split('-')[0]
+    
+    # Buscar el producto en la base de datos (esto es un ejemplo, ajusta a tu modelo)
+    productos = {
+        "1": {"id": 1, "name": "Cerveza Cusqueña", "price": 6.0, "description": "Botella de cerveza 350ml"},
+        "2": {"id": 2, "name": "Arroz Costeño", "price": 8.0, "description": "Bolsa de arroz de 5kg"},
+    }
+
+    product = productos.get(product_id)
+    if not product:
+        return jsonify({'message': 'Producto no encontrado'}), 404
+
+    return jsonify(product)
 
 # Actualizar un usuario
 @app.route('/api/usuarios/<int:user_id>', methods=['PUT'])
@@ -471,43 +573,56 @@ def view_cart():
 
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 
-@app.route('/payment')
-def payment_page():
-    # Verifica si el usuario tiene productos en el carrito
-    cart = session.get('cart', [])
-    if not cart:
-        return redirect(url_for('view_cart'))  # Si no hay productos, redirige al carrito
+@routes.route('/api/check-login', methods=['GET'])
+def check_login():
+    if 'user_id' in session:
+        return jsonify({'logged_in': True}), 200
+    else:
+        return jsonify({'logged_in': False}), 200
 
-    # Calcula el total del carrito
-    subtotal = sum(item['price'] * item['quantity'] for item in cart)
-    igv = subtotal * 0.18  # IGV del 18%
-    total = subtotal + igv
-
-    return render_template('pago.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
-
-
-@app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
-def actualizar_estado_pedido(pedido_id):
+@app.route('/api/login', methods=['POST'])
+def api_login():
     data = request.get_json()
-    nuevo_estado = data.get('estado')
+    username = data.get('username')
+    password = data.get('password')
 
-    if not nuevo_estado:
-        return jsonify({'message': 'Estado no proporcionado'}), 400
+    # Log de actividad (cuando alguien intente iniciar sesión)
+    app.logger.info(f"Intento de inicio de sesión con usuario: {username}")
+    
+    # Verificar si el usuario existe
+    user = Usuarios.query.filter_by(username=username).first()
 
-    pedido = Pedido.query.get(pedido_id)
-    if not pedido:
-        return jsonify({'message': 'Pedido no encontrado'}), 404
+    if user and user.password == password:
+        # Éxito, logueamos la acción
+        app.logger.info(f"Inicio de sesión exitoso para usuario: {username}")
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+    else:
+        # Error, logueamos el intento fallido
+        app.logger.error(f"Error en inicio de sesión para usuario: {username}")
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
-    pedido.estado = nuevo_estado
-    db.session.commit()
-
-    return jsonify({'message': 'Estado del pedido actualizado con éxito'}), 200
-
-
+# Ruta principal para probar
+@app.route('/')
+def hello_world():
+    app.logger.info("Página principal accedida.")
+    return '¡Hola Mundo!'
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###
 app.register_blueprint(routes)
 
-# Iniciar la aplicación Flask
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/')
+def home():
+    return "¡El backend Flask está funcionando y exponiendo métricas!"
+
+@app.route('/status')
+def status():
+    return {"status": "OK"}
+
+if __name__ == "__main__":
+    # Corre la aplicación en localhost:5000
+    app.run(host="0.0.0.0", port=5000)
