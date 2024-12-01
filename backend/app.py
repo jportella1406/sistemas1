@@ -1,6 +1,9 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 import os
+from datetime import datetime
+from sqlalchemy.exc import SQLAlchemyError
+
 
 # Crear la aplicación Flask
 app = Flask(__name__)
@@ -343,6 +346,48 @@ def get_user(user_id):
 
 
 
+@app.route('/procesar-pago', methods=['POST'])
+def procesar_pago():
+    if 'cart' not in session or not session['cart']:
+        return jsonify({'success': False, 'message': 'El carrito está vacío'}), 400
+
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Debe iniciar sesión para realizar un pedido'}), 401
+
+    # Obtener datos del usuario y del carrito
+    user_id = session['user_id']
+    usuario = db.session.get(Usuarios, user_id)  # Utiliza Session.get()
+    if not usuario:
+        return jsonify({'success': False, 'message': 'Usuario no encontrado'}), 404
+
+    direccion = usuario.direccion  # Obtener la dirección del usuario
+    cart = session['cart']
+
+    # Crear un ID único para el pedido
+    fecha_actual = datetime.now()
+
+    try:
+        # Insertar cada producto del carrito en la tabla pedidos
+        for item in cart:
+            nuevo_pedido = Pedido(
+                fecha=fecha_actual,
+                user_id=user_id,
+                direccion=direccion,
+                producto=item['name'],
+                precio=item['price'] * item['quantity'],
+                estado='pendiente'
+            )
+            db.session.add(nuevo_pedido)
+
+        db.session.commit()
+        session.pop('cart', None)  # Vaciar el carrito
+        return jsonify({'success': True, 'message': 'Pedido procesado correctamente'})
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error al procesar el pedido: {str(e)}'}), 500
+
+
+
 ############################################################################
 ####################### --- RUTAS HTML --- #################################
 ############################################################################
@@ -403,8 +448,40 @@ def view_cart():
 
 @app.route('/payment')
 def payment_page():
-    # Aquí se renderiza la página de pago
-    return render_template('pago.html')
+    # Verifica si el usuario tiene productos en el carrito
+    cart = session.get('cart', [])
+    if not cart:
+        return redirect(url_for('view_cart'))  # Si no hay productos, redirige al carrito
+
+    # Calcula el total del carrito
+    subtotal = sum(item['price'] * item['quantity'] for item in cart)
+    igv = subtotal * 0.18  # IGV del 18%
+    total = subtotal + igv
+
+    return render_template('pago.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
+
+
+@app.route('/pedido')
+def pedido():
+    return render_template('dash-pedido.html')
+
+@app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
+def actualizar_estado_pedido(pedido_id):
+    data = request.get_json()
+    nuevo_estado = data.get('estado')
+
+    if not nuevo_estado:
+        return jsonify({'message': 'Estado no proporcionado'}), 400
+
+    pedido = Pedido.query.get(pedido_id)
+    if not pedido:
+        return jsonify({'message': 'Pedido no encontrado'}), 404
+
+    pedido.estado = nuevo_estado
+    db.session.commit()
+
+    return jsonify({'message': 'Estado del pedido actualizado con éxito'}), 200
+
 
 
 ### --- Registrar el Blueprint después de definir todas las rutas --- ###

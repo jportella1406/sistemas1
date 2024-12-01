@@ -3,6 +3,19 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
+class Pedido(db.Model):
+    __tablename__ = 'pedidos'
+
+    pedidoId = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fecha = db.Column(db.DateTime, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.user_id'), nullable=False)
+    direccion = db.Column(db.String(255), nullable=True)
+    producto = db.Column(db.String(255), nullable=False)
+    precio = db.Column(db.Float, nullable=False)
+    estado = db.Column(db.String(50), nullable=False, default='pendiente')
+
+    usuario = db.relationship('Usuarios', backref=db.backref('pedidos', lazy=True))
+
 class Producto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -10,13 +23,6 @@ class Producto(db.Model):
     precio = db.Column(db.Float, nullable=False)
     imagen = db.Column(db.String(100), nullable=True)  # URL de la imagen
     categoria = db.Column(db.String(50), nullable=False)  # Columna de categoría
-
-class Pedido(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    fecha = db.Column(db.DateTime, default=datetime.utcnow)
-    total = db.Column(db.Float, nullable=False)
-    estado = db.Column(db.String(50), default="pendiente")
-    productos = db.relationship('ProductoPedido', backref='pedido', lazy=True)
 
 class ProductoPedido(db.Model):  # Relación de muchos a muchos entre Pedido y Producto
     id = db.Column(db.Integer, primary_key=True)
@@ -46,11 +52,11 @@ class Usuarios(db.Model):
     rol = db.Column(db.String(10), nullable=False, default='usuario')
     direccion = db.Column(db.String(255), nullable=True) 
 
-    def __init__(self, username, password, rol, nombre=None, email=None, direccion=None):
-        self.username = username
-        self.password = password
-        self.rol = rol
-        self.nombre = nombre
-        self.email = email
+    def __init__(self, fecha, user_id, direccion, producto, precio, estado='pendiente'):
+        self.fecha = fecha
+        self.user_id = user_id
         self.direccion = direccion
+        self.producto = producto
+        self.precio = precio
+        self.estado = estado
 
