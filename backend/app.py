@@ -48,6 +48,7 @@ def api_register():
     email = data.get('email')
     password = data.get('password')
     rol = data.get('rol', 'usuario')  # Rol por defecto
+    direccion = data.get('direccion', '')  # Handle the new field
 
     if not all([nombre, username, email, password]):
         return jsonify({'message': 'Faltan campos obligatorios'}), 400
@@ -139,7 +140,7 @@ def update_user(user_id):
     usuario.nombre = data.get('nombre', usuario.nombre)
     usuario.email = data.get('email', usuario.email)
     usuario.rol = data.get('rol', usuario.rol)
-
+    usuario.direccion = data.get('direccion', usuario.direccion)
     db.session.commit()
     return jsonify({'message': 'Usuario actualizado con éxito'}), 200
 

@@ -40,10 +40,11 @@ class Usuarios(db.Model):
     
     user_id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    rol = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
+    rol = db.Column(db.String(10), nullable=False, default='usuario')
+    direccion = db.Column(db.String(255), nullable=True) 
 
     def __init__(self, username, password, rol, nombre=None, email=None):
         self.username = username
