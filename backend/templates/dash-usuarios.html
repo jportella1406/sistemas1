@@ -11,7 +11,7 @@
 <body>
   <div class="d-flex">
     <!-- Barra lateral -->
-    <div class="bg-primary text-white p-3 vh-100" style="width: 250px;">
+    <div class="p-3 vh-100" style="width: 250px; background-color: #2A653E">
       <h5 class="text-center mb-4">
         <a href="{{ url_for('index') }}" style="text-decoration: none; color: white;">mercadito.pe</a>
     </h5>    
@@ -45,7 +45,7 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Lista de Usuarios</h2>
         <button 
-          class="btn btn-primary" 
+          class="btn" 
           data-bs-toggle="modal" 
           data-bs-target="#newUserModal">
           <i class="fas fa-user-plus"></i> Nuevo Usuario
@@ -126,7 +126,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="button" class="btn btn-primary" onclick="addNewUser()">Guardar</button>
+              <button type="button" class="btn btn-success" onclick="addNewUser()">Guardar</button>
             </div>
           </form>          
         </div>
