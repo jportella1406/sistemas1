@@ -307,7 +307,8 @@ def login_page():
             session['role'] = user.rol  # Guardar el rol en la sesión para usarlo en otras rutas
 
             # Depuración: Verificar si el rol se asigna correctamente
-            print(f"Usuario logeado: {user.username}, Rol: {user.rol}")
+            print(f"Usuario logeado: {user.username}")
+            print(f"Usuario logeado: Rol: {user.rol}")
 
             # Redirigir según el rol del usuario
             if session['role'] == 'admin':  # Cambia 'admin' al valor exacto de tu base de datos
@@ -345,7 +346,6 @@ def get_user(user_id):
     }), 200
 
 
-
 @app.route('/procesar-pago', methods=['POST'])
 def procesar_pago():
     if 'cart' not in session or not session['cart']:
@@ -381,10 +381,17 @@ def procesar_pago():
 
         db.session.commit()
         session.pop('cart', None)  # Vaciar el carrito
-        return jsonify({'success': True, 'message': 'Pedido procesado correctamente'})
+
+        # Retornar una respuesta indicando redirección a /payment
+        return jsonify({
+            'success': True,
+            'message': 'Pedido procesado correctamente. Redirigiendo a la página de pago...',
+            'redirect_url': url_for('payment_page')  # Genera la URL para /payment
+        })
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error al procesar el pedido: {str(e)}'}), 500
+
 
 
 @app.route('/pedido', methods=['GET'])
@@ -432,7 +439,7 @@ def confirm_payment():
 
 @app.route('/')
 def index():
-    print(f"Usuario logeado: {session.get('username')}")
+    print(f"Usuario logeado: {session.get('username')}, {session.get('role')}")
     productos = Producto.query.all()
     return render_template('index.html', productos=productos)
 
@@ -484,19 +491,30 @@ def view_cart():
 
     return render_template('carrito.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
 
-@app.route('/payment')
+@app.route('/payment', methods=['GET'])
 def payment_page():
-    # Verifica si el usuario tiene productos en el carrito
+    # Verifica si el usuario está logueado
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))  # Redirige a la página de inicio de sesión si no está logueado
+
+    # Intenta obtener el carrito de la sesión
     cart = session.get('cart', [])
+    
+    # Si el carrito está vacío, muestra un mensaje de carrito vacío en lugar de redirigir
     if not cart:
-        return redirect(url_for('view_cart'))  # Si no hay productos, redirige al carrito
+        cart = []  # Asegura que cart esté definido como una lista vacía
+        subtotal = 0
+        igv = 0
+        total = 0
+    else:
+        # Calcula el total del carrito
+        subtotal = sum(item['price'] * item['quantity'] for item in cart)
+        igv = subtotal * 0.18  # IGV del 18%
+        total = subtotal + igv
 
-    # Calcula el total del carrito
-    subtotal = sum(item['price'] * item['quantity'] for item in cart)
-    igv = subtotal * 0.18  # IGV del 18%
-    total = subtotal + igv
-
+    # Renderiza la página de pago, incluso si el carrito está vacío
     return render_template('pago.html', cart=cart, subtotal=subtotal, igv=igv, total=total)
+
 
 
 @app.route('/api/pedidos/<int:pedido_id>', methods=['PUT'])
