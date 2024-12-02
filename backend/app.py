@@ -410,6 +410,19 @@ def gestion_pedidos():
     return render_template('dash-pedido.html', pedidos=pedidos_data)
 
 
+@app.route('/confirm-payment', methods=['POST'])
+def confirm_payment():
+    confirmation_code = request.form.get('confirmationCode')
+
+    # Verificar si se ingresó el código de confirmación
+    if not confirmation_code:
+        return render_template('pago.html', error="Por favor, ingresa un código de confirmación.")
+
+    # Aquí puedes agregar lógica para validar el código de confirmación
+    # y marcar el pedido como confirmado o procesar el pago.
+    # Por ahora, asumiremos que es válido y redirigiremos al usuario.
+    
+    return render_template('pago.html', success="Pago confirmado exitosamente. Tu pedido está siendo preparado.")
 
 
 

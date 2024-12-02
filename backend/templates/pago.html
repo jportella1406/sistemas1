@@ -50,8 +50,25 @@
         </div>
     </div>
 
-
-
+    <!-- Sección de Pago -->
+    <div class="container" style="margin-top: 50px; display: flex; align-items: center;">
+        <!-- Imagen del código QR -->
+        <div style="flex: 40%; text-align: center;">
+            <img src="{{ url_for('static', filename='img/codigoqr.png') }}" alt="Código QR" style="width: 100%;">
+        </div>
+        <!-- Mensaje de instrucciones -->
+        <div style="flex: 60%; padding-left: 20px; margin: 90px;">
+            <h3 style="font-size: 20px; margin-bottom: 20px;">Paga con PLIN o con YAPE</h3>
+            <p style="font-size: 16px;">Escanea el código QR para realizar el pago. Una vez realizado, ingresa el código de confirmación de pago para que podamos preparar tu pedido.</p>
+            <form action="{{ url_for('confirm_payment') }}" method="POST" style="margin-top: 20px;">
+                <div style="margin-bottom: 10px;">
+                    <label for="confirmationCode" style="font-size: 14px; font-weight: bold;">Código de confirmación:</label>
+                    <input type="text" id="confirmationCode" name="confirmationCode" class="form-control" required placeholder="Ingresa el código aquí" style="width: 80%; padding: 10px; font-size: 14px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background-color: #4CAF50; color: white; padding: 10px 20px; font-size: 16px; border: none; border-radius: 5px; width: 200px;">Confirmar Pago</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Pie de página -->
     <div class="footer">
