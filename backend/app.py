@@ -1,8 +1,14 @@
-from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for
+from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for, g
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
-import os
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
+from prometheus_flask_exporter import PrometheusMetrics
+from cryptography.fernet import Fernet
+import base64
+import os
+import bcrypt
+import logging
+from logging.handlers import RotatingFileHandler
 
 
 # Crear la aplicación Flask
@@ -10,16 +16,46 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'mercadito.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
+metrics = PrometheusMetrics(app)
 db.init_app(app)
+
+# Crear el directorio de logs si no existe
+log_dir = os.path.join(os.getcwd(), 'logs')
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Nombre de archivo para el log, con fecha
+log_filename = os.path.join(log_dir, f'app_{datetime.now().strftime("%Y-%m-%d")}.log')
+
+# Configurar el manejador de logs con rotación
+handler = RotatingFileHandler(log_filename, maxBytes=1000000, backupCount=5)
+handler.setLevel(logging.INFO)
+
+# Configurar el formato de los logs
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Asegurarse de que el handler se añada al logger de la aplicación después de la inicialización
+app.logger.addHandler(handler)
+
+# Configurar el nivel del logger a INFO
+app.logger.setLevel(logging.INFO)
+
+# Registrar un mensaje informativo al iniciar la app
+app.logger.info("Aplicación iniciada")
 
 # Blueprint para API (endpoints REST)
 routes = Blueprint('routes', __name__)
+
+# Generar una clave secreta (haz esto una vez y guárdala en un lugar seguro)
+SECRET_KEY = os.getenv('SECRET_KEY') or Fernet.generate_key()
+cipher_suite = Fernet(SECRET_KEY)
 
 ############################################################################
 ######################## --- RUTAS API --- #################################
 ############################################################################
 
-@app.route('/api/login', methods=['POST'])
+@routes.route('/api/login', methods=['POST'])
 def api_login():
     data = request.get_json()
     username = data.get('username')
@@ -28,10 +64,12 @@ def api_login():
     # Verificar si el usuario existe
     user = Usuarios.query.filter_by(username=username).first()
 
-    if user and user.password == password:
+    if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        # Configurar sesión para el usuario
         session['user_id'] = user.user_id
         session['username'] = user.username
         session['role'] = user.rol  # Guardar el rol en la sesión
+
         return jsonify({
             'message': 'Inicio de sesión exitoso',
             'user_id': user.user_id,
@@ -41,34 +79,44 @@ def api_login():
     else:
         return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
-
-
 @routes.route('/api/register', methods=['POST'])
 def api_register():
-    data = request.json
+    # Intentar obtener datos como JSON primero
+    if request.is_json:
+        data = request.json
+    else:
+        # Si no es JSON, obtenerlos desde form-urlencoded
+        data = request.form.to_dict()
+
     nombre = data.get('nombre')
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     rol = data.get('rol', 'usuario')  # Rol por defecto
-    direccion = data.get('direccion')  # Handle the new field
+    direccion = data.get('direccion')  # Campo adicional
 
     if not all([nombre, username, email, password, direccion]):
         return jsonify({'message': 'Faltan campos obligatorios'}), 400
 
+    # Verificar si el nombre de usuario ya está en uso
     existing_user = Usuarios.query.filter_by(username=username).first()
     if existing_user:
         return jsonify({'message': 'El nombre de usuario ya está en uso'}), 400
-    
+
+    # Verificar si el email ya está en uso
     existing_email = Usuarios.query.filter_by(email=email).first()
     if existing_email:
-        return jsonify({'message': 'La direccion de correo ya está en uso'}), 400
+        return jsonify({'message': 'La dirección de correo ya está en uso'}), 400
 
+    # Hashear la contraseña antes de guardarla
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    # Crear un nuevo usuario
     new_user = Usuarios(
         nombre=nombre,
         username=username,
         email=email,
-        password=password,
+        password=hashed_password.decode('utf-8'),  # Almacenar como string
         rol=rol,
         direccion=direccion
     )
@@ -76,6 +124,7 @@ def api_register():
     db.session.commit()
 
     return jsonify({'message': 'Usuario registrado exitosamente'}), 201
+
 
 
 # Obtener todos los productos
@@ -408,10 +457,6 @@ def gestion_pedidos():
 
     # Renderiza la plantilla con los datos de pedidos
     return render_template('dash-pedido.html', pedidos=pedidos_data)
-
-
-
-
 
 ############################################################################
 ####################### --- RUTAS HTML --- #################################

@@ -43,20 +43,19 @@ class User(db.Model):
     
 class Usuarios(db.Model):
     __tablename__ = 'usuarios'
-    
+
     user_id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     username = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
     rol = db.Column(db.String(10), nullable=False, default='usuario')
-    direccion = db.Column(db.String(255), nullable=True) 
+    direccion = db.Column(db.String(255), nullable=True)
 
-    def __init__(self, fecha, user_id, direccion, producto, precio, estado='pendiente'):
-        self.fecha = fecha
-        self.user_id = user_id
+    def __init__(self, nombre, email, username, password, rol='usuario', direccion=None):
+        self.nombre = nombre
+        self.email = email
+        self.username = username
+        self.password = password
+        self.rol = rol
         self.direccion = direccion
-        self.producto = producto
-        self.precio = precio
-        self.estado = estado
-
