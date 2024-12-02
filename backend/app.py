@@ -1,6 +1,7 @@
 from flask import Flask, Blueprint, jsonify, request, session, render_template, redirect, url_for, g
 from models import db, Producto, Pedido, ProductoPedido, Usuarios
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import SQLAlchemyError
 from prometheus_flask_exporter import PrometheusMetrics
 from cryptography.fernet import Fernet
@@ -9,6 +10,7 @@ import os
 import bcrypt
 import logging
 from logging.handlers import RotatingFileHandler
+from models import db
 
 
 # Crear la aplicación Flask
@@ -18,6 +20,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.urandom(24)
 metrics = PrometheusMetrics(app)
 db.init_app(app)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
 
 # Crear el directorio de logs si no existe
 log_dir = os.path.join(os.getcwd(), 'logs')
@@ -61,14 +67,20 @@ def api_login():
     username = data.get('username')
     password = data.get('password')
 
-    # Verificar si el usuario existe
     user = Usuarios.query.filter_by(username=username).first()
 
-    if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        # Configurar sesión para el usuario
+    if not user:
+        db.session.remove()
+        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
+    # Manejo de contraseñas antiguas (sin hash)
+    if user.password == password:
         session['user_id'] = user.user_id
         session['username'] = user.username
-        session['role'] = user.rol  # Guardar el rol en la sesión
+        session['role'] = user.rol
+
+        # Liberar la sesión, sin actualizar la contraseña
+        db.session.remove()
 
         return jsonify({
             'message': 'Inicio de sesión exitoso',
@@ -76,8 +88,26 @@ def api_login():
             'username': user.username,
             'role': user.rol
         }), 200
-    else:
-        return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
+
+    # Manejo de contraseñas con hash bcrypt
+    if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+        session['user_id'] = user.user_id
+        session['username'] = user.username
+        session['role'] = user.rol
+
+        # Liberar la sesión
+        db.session.remove()
+
+        return jsonify({
+            'message': 'Inicio de sesión exitoso',
+            'user_id': user.user_id,
+            'username': user.username,
+            'role': user.rol
+        }), 200
+
+    # Si ninguna coincide, devolver error
+    db.session.remove()
+    return jsonify({'message': 'Usuario o contraseña incorrectos'}), 401
 
 @routes.route('/api/register', methods=['POST'])
 def api_register():
