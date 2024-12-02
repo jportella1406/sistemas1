@@ -90,12 +90,11 @@
         <p class="text-end"><strong>IGV (18%):</strong> S/.<span id="igv">{{ "%.2f"|format(igv) }}</span></p>
         <p class="text-end"><strong>Total:</strong> S/.<span id="total">{{ "%.2f"|format(total) }}</span></p>
 
-       <!-- Botón "Proceder al pago" -->
         <!-- Botón "Proceder al pago" -->
         <div style="text-align: right; margin-top: 20px;">
             {% if cart and cart|length > 0 %}
             <button id="pagoButton" class="btn btn-primary" 
-                    style="background-color: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; font-size: 16px;">
+                    style="background-color: green; color: white; padding: 10px 20px; border-radius: 5px; font-size: 16px;">
                 Proceder al pago
             </button>
             {% else %}
@@ -105,10 +104,7 @@
             </button>
             {% endif %}
         </div>
-
     </div>
-    
-
 
     <!-- Pie de página -->
     <div class="footer">
@@ -136,7 +132,7 @@
                 </div>
             </div>
             <hr>
-            <p class="copyright">Copyright 2024 - Jose Portella</p>
+            <p class="copyright">Copyright 2024 - Jose Portella | Bernardo Rivera</p>
         </div>
     </div>
 
