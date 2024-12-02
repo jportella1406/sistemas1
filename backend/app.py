@@ -494,7 +494,7 @@ def gestion_pedidos():
 
 @app.route('/')
 def index():
-    print(f"Usuario logeado: {session.get('username')}")
+    print(f"Usuario logeado: {session.get('username')}, {session.get('role')}")
     productos = Producto.query.all()
     return render_template('index.html', productos=productos)
 
